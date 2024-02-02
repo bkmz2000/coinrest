@@ -58,8 +58,9 @@ async def _get_first_task(tasks: Iterable[asyncio.Task]) -> list[tuple[int, int]
 
 async def fetch_ohlcv_loop(exchange: BaseExchange, symbol: str, timeframe: str):
     ohlcv = await exchange.fetch_ohlcv(symbol, timeframe)
-    result = {"prices": [tuple((item[0], item[4])) for item in ohlcv]}
-    return exchange.id, result
+    result = {"prices": [tuple((item[0], item[4])) for item in ohlcv],
+              "exchange": exchange.id}
+    return result
 
 
 async def main():

@@ -55,9 +55,18 @@ async def _get_first_task(tasks: Iterable[asyncio.Task]) -> list[tuple[int, int]
 
     return result
 
+frames = {
+    "5m": 288,
+    "1h": 840,
+    "1d": 5000,
+}
 
 async def fetch_ohlcv_loop(exchange: BaseExchange, symbol: str, timeframe: str):
-    ohlcv = await exchange.fetch_ohlcv(symbol, timeframe)
+    limit = frames[timeframe]
+    ohlcv = await exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
+    if len(ohlcv) < int(limit) and timeframe != "1d":
+        raise Exception("Not enough data")
+
     result = {"prices": [tuple((item[0], item[4])) for item in ohlcv],
               "exchange": exchange.id}
     return result

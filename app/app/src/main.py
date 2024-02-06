@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
     FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
     global ex_markets, mapper
     exs = AllMarketsLoader(ccxt.exchanges)
-    # exs = AllMarketsLoader(['binance', 'mexc'])
+    # exs = AllMarketsLoader(['binance', 'mexc', 'hitbtc3'])
     ex_markets = await exs.start()
     async with AsyncSessionFactory() as session:
         mapper = await get_mapper(session=session, exchanges=ex_markets)

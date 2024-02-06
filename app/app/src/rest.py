@@ -1,4 +1,7 @@
 import asyncio
+import time
+from typing import NoReturn
+
 import ccxt.async_support as ccxt
 from ccxt.async_support.base.exchange import BaseExchange
 from src.lib.utlis import GeckoMarkets
@@ -67,9 +70,23 @@ async def fetch_ohlcv_loop(exchange: BaseExchange, symbol: str, timeframe: str):
     if len(ohlcv) < int(limit) and timeframe != "1d":
         raise Exception("Not enough data")
 
+    if timeframe == "5m":
+        _check_fresh(ohlcv)
+
     result = {"prices": [tuple((item[0], item[4])) for item in ohlcv],
               "exchange": exchange.id}
     return result
+
+
+def _check_fresh(ohlcv: list) -> NoReturn:
+    """
+        Check if the values received from exchange are actual
+    """
+    stmp = ohlcv[-1][0]
+    now = int(time.time()) * 1000
+    diff = now - stmp
+    if diff > 900_000:  # more 15 minutes
+        raise Exception("Too old values")
 
 
 async def main():

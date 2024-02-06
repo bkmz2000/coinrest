@@ -21,3 +21,8 @@ class BaseMapper(BaseModel):
 class Mapper(BaseMapper):
     id: int
     update: datetime.datetime
+
+
+class ChartResponse(BaseModel):
+    prices: list[tuple[int, float]]
+    exchange: str

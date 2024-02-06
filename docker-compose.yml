@@ -13,6 +13,42 @@ services:
     ports:
       - "7352:7352"
     command: uvicorn src.main:app --reload --host 0.0.0.0 --port 7352
+
+  redis:
+    build:
+      context: redis
+      dockerfile: Dockerfile
+    hostname: redis
+    ports:
+      - "6389:6389"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+#    volumes:
+#      - redis_data:/var/lib/redis-stack/
+
+  celery_worker:
+    build:
+      context: ./app
+      dockerfile: ./Dockerfile
+    command: celery -A src.worker worker --loglevel=INFO
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    links:
+      - redis
+
+  celery_beat:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    command: celery -A src.worker beat --loglevel=INFO
+    env_file:
+      - .env
+    depends_on:
+      - redis
   db:
     image: postgres:15.1-alpine
     volumes:

@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column
 
 
-SQLALCHEMY_DATABASE_URL = os.environ["DB_URL"]
+SQLALCHEMY_DATABASE_URL = os.environ.get("DB_URL")
 engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True, future=True)
 Base = declarative_base()
 

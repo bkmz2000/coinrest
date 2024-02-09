@@ -8,6 +8,12 @@ from loguru import logger as lg
 from starlette.exceptions import HTTPException
 from collections.abc import Iterable
 
+frames = {
+    "5m": 288,
+    "1h": 840,
+    "1d": 1000,
+}
+
 
 async def fetch_markets_chart(exchanges: list[GeckoMarkets],
                               currency: str,
@@ -23,6 +29,21 @@ async def fetch_all_ohlcv(exchanges: list[GeckoMarkets], timeframe: str) -> dict
     return result
 
 
+async def fetch_ohlcv_loop(exchange: BaseExchange, symbol: str, timeframe: str) -> dict[str, list[tuple[int, float]]]:
+    limit = frames[timeframe]
+    ohlcv = await exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
+    if len(ohlcv) < int(limit) and timeframe != "1d":
+        raise Exception("Not enough data")
+    _check_fresh(ohlcv, timeframe)
+    if timeframe == "1d":
+        return {"prices": [tuple((_trunc_time(item[0]), item[4])) for item in ohlcv],
+                "exchange": exchange.id}
+
+    result = {"prices": [tuple((item[0], item[4])) for item in ohlcv],
+              "exchange": exchange.id}
+    return result
+
+
 async def _get_first_task(tasks: Iterable[asyncio.Task]) -> dict[str, list[tuple[int, int]]] | None:
     if not tasks:
         return None
@@ -32,7 +53,7 @@ async def _get_first_task(tasks: Iterable[asyncio.Task]) -> dict[str, list[tuple
     done, pending = await asyncio.wait(
         tasks,
         return_when=asyncio.FIRST_COMPLETED,
-        timeout=2
+        timeout=5
     )
 
     # Get the first result
@@ -59,25 +80,6 @@ async def _get_first_task(tasks: Iterable[asyncio.Task]) -> dict[str, list[tuple
     return result
 
 
-frames = {
-    "5m": 288,
-    "1h": 840,
-    "1d": 5000,
-}
-
-
-async def fetch_ohlcv_loop(exchange: BaseExchange, symbol: str, timeframe: str) -> dict[str, list[tuple[int, float]]]:
-    limit = frames[timeframe]
-    ohlcv = await exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
-    if len(ohlcv) < int(limit) and timeframe != "1d":
-        raise Exception("Not enough data")
-    _check_fresh(ohlcv, timeframe)
-
-    result = {"prices": [tuple((item[0], item[4])) for item in ohlcv],
-              "exchange": exchange.id}
-    return result
-
-
 def _check_fresh(ohlcv: list, timeframe: str) -> None:
     """
         Check if the values received from exchange are actual
@@ -96,24 +98,58 @@ def _check_fresh(ohlcv: list, timeframe: str) -> None:
         if diff > 7_200:  # more 2 hours
             raise Exception("Too old values")
 
+    elif timeframe == "1d":
+        stmp = ohlcv[-1][0] // 1000
+        now = int(time.time())
+        diff = now - stmp
+        if diff > 172_800:  # more 2 days
+            raise Exception("Too old values")
+
 
 async def main():
     from src.deps.markets import AllMarketsLoader
     from src.mapper import get_mapper
-    exs = AllMarketsLoader(['mexc', 'binance'])
-    ex_markets = await exs.start()
-    mapper = await get_mapper(ex_markets)
+    from src.db.connection import AsyncSessionFactory
+    from datetime import datetime
 
-    lg.info("Request")
-    mapped_markets = mapper.get('bitcoin')
-    if not mapped_markets:
-        raise HTTPException(status_code=404, detail="cg_id not found in any exchange")
-    lg.info(f"{mapped_markets}")
-    await fetch_markets_chart(exchanges=mapped_markets,
-                              currency='usd',
-                              timeframe='1d')
+    # exs = AllMarketsLoader(['mexc', 'binance'])
+    exs = AllMarketsLoader(ccxt.exchanges)
+    ex_markets = await exs.start()
+    async with AsyncSessionFactory() as session:
+        mapper = await get_mapper(ex_markets, session)
+
+    # lg.info("Request")
+    # mapped_markets = mapper.get('bitcoin')
+    # if not mapped_markets:
+    #     raise HTTPException(status_code=404, detail="cg_id not found in any exchange")
+    # for ex in ex_markets:
+    #     try:
+    #         chart = await ex.fetch_ohlcv("BTC/USDT", timeframe="1d", limit=100)
+    #         first = _trunc_time(chart[0][0] // 1000)
+    #         # lg.info(first)
+    #         first = datetime.utcfromtimestamp(first).strftime('%Y-%m-%d %H:%M:%S')
+    #         lg.info(f"{first} - {ex.id}")
+    #     except Exception as e:
+    #         lg.error(e)
+    # lg.info(f"{mapped_markets}")
+    # chart = await fetch_markets_chart(exchanges=mapped_markets,
+    #                                   currency='usd',
+    #                                   timeframe='1d')
+    # lg.info(chart)
+    # lg.info(len(chart.get("prices")))
+
+    # last = datetime.utcfromtimestamp(chart["prices"][-1][0] // 1000).strftime('%Y-%m-%d %H:%M:%S')
+
     lg.info("Response")
     await exs.close()
+
+
+def _trunc_time(timestamp: int):
+    """
+        Strict all timestamps to 00.00.00 (hh.mm.ss)
+    """
+    trunc = timestamp % 86_400_000
+    return timestamp - trunc
 
 
 if __name__ == '__main__':

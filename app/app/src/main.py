@@ -25,8 +25,8 @@ mapper: dict[str, list[GeckoMarkets]] = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global ex_markets, mapper, r
-    exs = AllMarketsLoader(ccxt.exchanges)
-    # exs = AllMarketsLoader(['binance', 'mexc', 'hitbtc3'])
+    exs = AllMarketsLoader(target='ohlcv')
+    # exs = AllMarketsLoader(target='ohlcv', exchange_names=['binance', 'mexc', 'hitbtc3'])
     ex_markets = await exs.start()
     r = redis.Redis(host=os.getenv("REDIS_HOST"), port=int(os.environ.get("REDIS_PORT")), decode_responses=True)
     # r = redis.Redis(host="0.0.0.0", port=6389, decode_responses=True)
@@ -73,3 +73,28 @@ async def update(session: AsyncSession = Depends(get_db)):
     global mapper
     mapper = await get_mapper(session=session, exchanges=ex_markets)
     await exs.close()
+
+
+@app.get("/ticker")
+async def ticker():
+    exs = AllMarketsLoader(target='volume')
+    ex_markets = await exs.start()
+    async with AsyncSessionFactory() as session:
+        mapper = await get_mapper(ex_markets, session)
+    total = 0
+    mapped_markets = mapper.get('polkadot')
+    if not mapped_markets:
+        raise HTTPException(status_code=404, detail="cg_id not found in any exchange")
+    for ex in ex_markets:
+        try:
+            tickers = await ex.fetch_tickers()
+            for k, v in tickers.items():
+                if k.startswith("DOT/"):
+                    volume = v.get("baseVolume")
+                    if volume:
+                        volume *= 7.19
+                        total += volume
+                        lg.debug(f'{ex.id}-{k}: {volume}')
+        except Exception as e:
+            lg.error(e)
+    lg.info(total)

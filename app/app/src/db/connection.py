@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column
 
 
-SQLALCHEMY_DATABASE_URL = os.environ.get("DB_URL")
+SQLALCHEMY_DATABASE_URL = os.environ.get("DB_URL", "postgresql+psycopg://exchange:df456Sdb34@0.0.0.0:6543/market")
 engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True, future=True)
 Base = declarative_base()
 

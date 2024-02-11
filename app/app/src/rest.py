@@ -112,25 +112,37 @@ async def main():
     from src.db.connection import AsyncSessionFactory
     from datetime import datetime
 
-    # exs = AllMarketsLoader(['mexc', 'binance'])
-    exs = AllMarketsLoader(ccxt.exchanges)
+    # exs = AllMarketsLoader(['binance'])
+    # exs = AllMarketsLoader(['mexc'])
+    # exs = AllMarketsLoader(target='volume', exchange_names=['mexc'])
+    exs = AllMarketsLoader(target='volume')
     ex_markets = await exs.start()
     async with AsyncSessionFactory() as session:
         mapper = await get_mapper(ex_markets, session)
 
-    # lg.info("Request")
-    # mapped_markets = mapper.get('bitcoin')
-    # if not mapped_markets:
-    #     raise HTTPException(status_code=404, detail="cg_id not found in any exchange")
-    # for ex in ex_markets:
-    #     try:
-    #         chart = await ex.fetch_ohlcv("BTC/USDT", timeframe="1d", limit=100)
-    #         first = _trunc_time(chart[0][0] // 1000)
-    #         # lg.info(first)
-    #         first = datetime.utcfromtimestamp(first).strftime('%Y-%m-%d %H:%M:%S')
-    #         lg.info(f"{first} - {ex.id}")
-    #     except Exception as e:
-    #         lg.error(e)
+    lg.info("Request")
+    total = 0
+    mapped_markets = mapper.get('polkadot')
+    if not mapped_markets:
+        raise HTTPException(status_code=404, detail="cg_id not found in any exchange")
+    for ex in ex_markets:
+        try:
+            # chart = await ex.fetch_ohlcv("BTC/USDT", timeframe="1d", limit=100)
+            tickers = await ex.fetch_tickers()
+            for k, v in tickers.items():
+                if k.startswith("DOT/"):
+                    volume = v.get("baseVolume")
+                    if volume:
+                        volume *= 7.19
+                        total += volume
+                        lg.debug(f'{ex.id}-{k}: {volume}')
+            # lg.debug(tickers)
+            # volume = ticker.get("quoteVolume")
+            # if volume:
+            #     total += volume
+            # lg.debug(f'{ex.id}, {ticker.get("quoteVolume")}')
+        except Exception as e:
+            lg.error(e)
     # lg.info(f"{mapped_markets}")
     # chart = await fetch_markets_chart(exchanges=mapped_markets,
     #                                   currency='usd',
@@ -140,6 +152,7 @@ async def main():
 
     # last = datetime.utcfromtimestamp(chart["prices"][-1][0] // 1000).strftime('%Y-%m-%d %H:%M:%S')
 
+    lg.info(total)
     lg.info("Response")
     await exs.close()
 

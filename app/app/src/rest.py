@@ -114,7 +114,7 @@ async def get_coins(session: AsyncSession):
     coins = await get_coins_from_db(session=session)
     result = {}
     for coin in coins:
-        result[coin.cg_id] = CoinResponse(usd=coin.price, usd_24_vol=coin.volume)
+        result[coin.cg_id] = CoinResponse(usd=coin.price, usd_24h_vol=coin.volume)
     return result
 
 

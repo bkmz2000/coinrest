@@ -49,4 +49,4 @@ class Coin:
 
 class CoinResponse(BaseModel):
     usd: float
-    usd_24_vol: float
+    usd_24h_vol: float

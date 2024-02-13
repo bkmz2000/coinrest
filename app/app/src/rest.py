@@ -3,9 +3,13 @@ import time
 
 import ccxt.async_support as ccxt
 from ccxt.async_support.base.exchange import BaseExchange
-from src.lib.utlis import GeckoMarkets
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.db.crud import save_last_volumes, get_coins_from_db
+from src.lib.utils import GeckoMarkets, Coin, CoinResponse
 from loguru import logger as lg
 from starlette.exceptions import HTTPException
+from collections import defaultdict
 from collections.abc import Iterable
 
 frames = {
@@ -106,55 +110,71 @@ def _check_fresh(ohlcv: list, timeframe: str) -> None:
             raise Exception("Too old values")
 
 
+async def get_coins(session: AsyncSession):
+    coins = await get_coins_from_db(session=session)
+    result = {}
+    for coin in coins:
+        result[coin.cg_id] = CoinResponse(usd=coin.price, usd_24_vol=coin.volume)
+    return result
+
+
 async def main():
     from src.deps.markets import AllMarketsLoader
-    from src.mapper import get_mapper
+    from src.mapper import get_mapper, get_cg_ids
+    from src.lib import utils
     from src.db.connection import AsyncSessionFactory
     from datetime import datetime
 
     # exs = AllMarketsLoader(['binance'])
     # exs = AllMarketsLoader(['mexc'])
     # exs = AllMarketsLoader(target='volume', exchange_names=['mexc'])
-    exs = AllMarketsLoader(target='volume')
-    ex_markets = await exs.start()
+    # exs = AllMarketsLoader(exchange_names=['binance'])
+    exs = AllMarketsLoader()
+    await exs.start()
+    ex_markets = exs.get_target_markets(target="volume")
     async with AsyncSessionFactory() as session:
-        mapper = await get_mapper(ex_markets, session)
+        coins = defaultdict(Coin)
+        prices = {}
+        super_total = 0
 
-    lg.info("Request")
-    total = 0
-    mapped_markets = mapper.get('polkadot')
-    if not mapped_markets:
-        raise HTTPException(status_code=404, detail="cg_id not found in any exchange")
-    for ex in ex_markets:
-        try:
-            # chart = await ex.fetch_ohlcv("BTC/USDT", timeframe="1d", limit=100)
-            tickers = await ex.fetch_tickers()
-            for k, v in tickers.items():
-                if k.startswith("DOT/"):
-                    volume = v.get("baseVolume")
-                    if volume:
-                        volume *= 7.19
-                        total += volume
-                        lg.debug(f'{ex.id}-{k}: {volume}')
-            # lg.debug(tickers)
-            # volume = ticker.get("quoteVolume")
-            # if volume:
-            #     total += volume
-            # lg.debug(f'{ex.id}, {ticker.get("quoteVolume")}')
-        except Exception as e:
-            lg.error(e)
-    # lg.info(f"{mapped_markets}")
-    # chart = await fetch_markets_chart(exchanges=mapped_markets,
-    #                                   currency='usd',
-    #                                   timeframe='1d')
-    # lg.info(chart)
-    # lg.info(len(chart.get("prices")))
 
-    # last = datetime.utcfromtimestamp(chart["prices"][-1][0] // 1000).strftime('%Y-%m-%d %H:%M:%S')
+        for ex in ex_markets:
+            try:
+                ids = await get_cg_ids(session=session, exchange_id=ex.id)
+                tickers = await ex.fetch_tickers()
+                total = 0
 
-    lg.info(total)
-    lg.info("Response")
-    await exs.close()
+                # Определяем все монеты по которым мы можем найти курс в тезерах
+                for k, v in tickers.items():
+                    if k.endswith("/USDT"):
+                        base = k.split("/USDT")[0]
+                        if v['last']:
+                            prices[base] = v['last']
+
+                # Перебираем все монеты, высчитаваем volume по курсу определенному выше
+                for k, v in tickers.items():
+                    if ":" in k:
+                        continue
+                    base = k.split("/")[0]
+                    rate = prices.get(base)
+                    volume = v.get('baseVolume')
+                    if rate and volume:
+                        cg_id = ids.get(base + "/USDT")
+                        if cg_id:
+                            coins[cg_id].volume += (volume * rate)
+                            coins[cg_id].price = rate
+                            if base == "BTC":
+                                total += volume * rate
+                                super_total += volume * rate
+                                lg.info(f"{ex.id}-{k}: {volume * rate}, {total}")
+                lg.info(f"Total for {ex.id}: {total}")
+            except Exception as e:
+                lg.error(e)
+        # await save_last_volumes(session=session, coins=coins)
+        # for k, v in coins.items():
+        #     lg.info(f"{k}: {v}")
+        lg.info(super_total)
+        await exs.close()
 
 
 def _trunc_time(timestamp: int):

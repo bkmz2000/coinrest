@@ -11,8 +11,10 @@ from contextlib import asynccontextmanager
 from loguru import logger as lg
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 from src.deps.markets import AllMarketsLoader
-from src.lib.utlis import GeckoMarkets, ChartResponse
+from src.lib.utils import GeckoMarkets, ChartResponse, CoinResponse
+from src.rest import get_coins
 from src.mapper import get_mapper, update_mapper
 from src.service.logic import fetch_charts
 from src.db.connection import get_db, AsyncSessionFactory
@@ -25,9 +27,9 @@ mapper: dict[str, list[GeckoMarkets]] = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global ex_markets, mapper, r
-    exs = AllMarketsLoader(target='ohlcv')
-    # exs = AllMarketsLoader(target='ohlcv', exchange_names=['binance', 'mexc', 'hitbtc3'])
-    ex_markets = await exs.start()
+    exs = AllMarketsLoader()
+    await exs.start()
+    ex_markets = exs.get_target_markets(target='ohlcv')
     r = redis.Redis(host=os.getenv("REDIS_HOST"), port=int(os.environ.get("REDIS_PORT")), decode_responses=True)
     # r = redis.Redis(host="0.0.0.0", port=6389, decode_responses=True)
     async with AsyncSessionFactory() as session:
@@ -35,7 +37,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    await exs.close()
+    # await exs.close()
     await r.aclose()
 
 
@@ -61,40 +63,24 @@ async def markets_chart(cg_id: str, currency: str, timeframe: str):
     return result
 
 
+@app.get("/api/coins/markets_price", response_model=dict[str, CoinResponse])
+async def coins(session: AsyncSession = Depends(get_db)):
+    return await get_coins(session=session)
+
+
+
 @app.get("/update")
 async def update(session: AsyncSession = Depends(get_db)):
     """
         Update mapper
     """
-    exs = AllMarketsLoader(ccxt.exchanges)
+    exs = AllMarketsLoader()
     # exs = AllMarketsLoader(['binance', 'mexc'])
-    new_ex_markets = await exs.start()
+    await exs.start()
+    new_ex_markets = exs.get_target_markets(target="ohlcv")
     await update_mapper(exchanges=new_ex_markets, session=session)
     global mapper
     mapper = await get_mapper(session=session, exchanges=ex_markets)
     await exs.close()
 
 
-@app.get("/ticker")
-async def ticker():
-    exs = AllMarketsLoader(target='volume')
-    ex_markets = await exs.start()
-    async with AsyncSessionFactory() as session:
-        mapper = await get_mapper(ex_markets, session)
-    total = 0
-    mapped_markets = mapper.get('polkadot')
-    if not mapped_markets:
-        raise HTTPException(status_code=404, detail="cg_id not found in any exchange")
-    for ex in ex_markets:
-        try:
-            tickers = await ex.fetch_tickers()
-            for k, v in tickers.items():
-                if k.startswith("DOT/"):
-                    volume = v.get("baseVolume")
-                    if volume:
-                        volume *= 7.19
-                        total += volume
-                        lg.debug(f'{ex.id}-{k}: {volume}')
-        except Exception as e:
-            lg.error(e)
-    lg.info(total)

@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dataclasses import dataclass, field
 from ccxt.async_support.base.exchange import BaseExchange
 import datetime
@@ -26,3 +27,26 @@ class Mapper(BaseMapper):
 class ChartResponse(BaseModel):
     prices: list[tuple[int, float]]
     exchange: str
+
+
+class BaseLastVolume(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    cg_id: str
+    volume: float
+    price: float
+
+
+class LastVolume(BaseLastVolume):
+    id: int
+    update: datetime.datetime
+
+
+@dataclass
+class Coin:
+    volume: float = 0
+    price: float = 0
+
+class CoinResponse(BaseModel):
+    usd: float
+    usd_24_vol: float

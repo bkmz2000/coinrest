@@ -9,8 +9,8 @@ from collections import defaultdict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.lib.client import fetch_data_from_hodler
-from src.lib.utlis import GeckoMarkets, BaseMapper
-from src.db.crud import set_mapper_data, get_mapper_data
+from src.lib.utils import GeckoMarkets, BaseMapper
+from src.db.crud import set_mapper_data, get_mapper_data, get_exchange_cg_ids
 
 
 async def get_mapper(exchanges: list[BaseExchange], session: AsyncSession) -> dict[str, list[GeckoMarkets]]:
@@ -25,6 +25,15 @@ async def get_mapper(exchanges: list[BaseExchange], session: AsyncSession) -> di
     # for k, v in mapper.items():
     #     lg.info(f"{k}: mapped {len(v)} exchanges")
     return mapper
+
+
+async def get_cg_ids(session: AsyncSession, exchange_id: str):
+    ids = {}
+    cg_ids = await get_exchange_cg_ids(session=session, exchange_id=exchange_id)
+    for market in cg_ids:
+        ids[market['symbol']] = market['cg_id']
+    return ids
+
 
 
 async def update_mapper(exchanges: list[BaseExchange], session: AsyncSession) -> dict[str, list[GeckoMarkets]]:

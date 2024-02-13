@@ -1,7 +1,7 @@
 import random
 from redis.asyncio import Redis
 
-from src.lib.utlis import GeckoMarkets
+from src.lib.utils import GeckoMarkets
 from src.rest import fetch_markets_chart
 from src.db.cache import get_from_cache
 from src.tasks.task import set_cache_task

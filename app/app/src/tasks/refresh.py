@@ -16,7 +16,7 @@ async def cache_refresh(timeframe: str) -> None:
     top_coins = coins[:250]
     exs = AllMarketsLoader(['binance', 'mexc', 'hitbtc3'])
 
-    ex_markets = await exs.start()
+    ex_markets = exs.get_target_markets(target="ohlcv")
 
     async with AsyncSessionFactory() as session:
         mapper = await get_mapper(session=session, exchanges=ex_markets)

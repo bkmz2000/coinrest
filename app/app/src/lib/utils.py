@@ -53,8 +53,8 @@ class Coin:
 
 
 class CoinResponse(BaseModel):
-    usd: float
-    usd_24h_vol: float
+    usd: float | None
+    usd_24h_vol: float | None
 
 
 def sleeping(func):

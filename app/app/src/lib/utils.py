@@ -35,9 +35,9 @@ class ChartResponse(BaseModel):
 class BaseLastVolume(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    cg_id: str
-    volume: float
-    price: float
+    cg_id: str | None
+    volume: float | None
+    price: float | None
 
 
 class LastVolume(BaseLastVolume):

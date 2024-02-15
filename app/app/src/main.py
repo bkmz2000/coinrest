@@ -65,7 +65,7 @@ async def markets_chart(cg_id: str, currency: str, timeframe: str):
     return result
 
 
-@app.get("/api/coins/markets_price", response_model=dict[str, CoinResponse])
+@app.get("/api/coins/markets_price")
 async def coins(session: AsyncSession = Depends(get_db)):
     return await get_coins(session=session)
 

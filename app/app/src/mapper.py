@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import suppress
 
 import ccxt.pro
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.lib.client import fetch_data_from_hodler
 from src.lib.utils import GeckoMarkets, BaseMapper
 from src.db.crud import set_mapper_data, get_mapper_data, get_exchange_cg_ids
+
 
 
 async def get_mapper(exchanges: list[BaseExchange], session: AsyncSession) -> dict[str, list[GeckoMarkets]]:
@@ -31,9 +33,77 @@ async def get_cg_ids(session: AsyncSession, exchange_id: str):
     ids = {}
     cg_ids = await get_exchange_cg_ids(session=session, exchange_id=exchange_id)
     for market in cg_ids:
-        ids[market['symbol']] = market['cg_id']
+        base = market['symbol'].split("/")[0]
+        ids[base] = market['cg_id']
+    lg.debug(f"{exchange_id} coingecko_ids: {ids}")
     return ids
 
+async def _fetch_all_tickers(ex: BaseExchange, symbols: set):
+    result = {}
+    returned = 0
+    for i in range(3):
+        # Fetch tickers and find all .../USDT(symbol) in it
+        try:
+            tickers = await ex.fetch_tickers()
+            lg.debug(len(tickers))
+            for symbol, prop in tickers.items():
+                last_price = prop.get('last')
+                # lg.info(f"{symbol}: {last_price} {prop}")
+                if symbol in symbols:
+                    symbols.remove(symbol)  # Remove if symbol present in tickers...
+                if last_price is None and symbol.endswith("/USDT"):  # ...But return if it's price is None, so we'll request it below
+                    returned += 1
+                    symbols.add(symbol)
+            result.update(tickers)
+
+            break
+        except Exception as e:
+            lg.error(e)
+            await asyncio.sleep(0.5)
+    lg.debug(f"{ex.id} returned to fetch: {returned}")
+    # If some .../USDT(symbol) not in tickers, fetch it
+    lg.debug(f"{ex.id} has {len(symbols)} not in tickers")
+    if not symbols:
+        return result
+
+    for symbol in symbols:
+        await asyncio.sleep(ex.fetch_timeout)
+        try:
+            ticker = await ex.fetch_ticker(symbol)
+            lg.debug(f"{ex.id} fetched ticker: {ticker}")
+            result[symbol] = ticker
+        except Exception as e:
+            if "delisted" in str(e):
+                continue
+            lg.error(f"{symbol}: {e}")
+    return result
+
+def _get_usdt_symbols(ex: BaseExchange) -> set:
+    """
+        Get all symbols that can be calculated in USDT, and can be matched to coingecko_id
+    """
+    symbols = set()
+    for symbol, prop in ex.markets.items():
+        if ":" in symbol or "/" not in symbol:  # ':' only in derivative symbol, skip it
+            continue
+        if prop["quote"] == "USDT":
+            symbols.add(symbol)
+    return symbols
+
+
+def _get_last_prices(tickers: dict) -> dict[str, float]:
+    """
+        Get price for base value in USD (tether) (in BTC/USDT btc-base, usdt-quote)
+    :param tickers:
+    :return: dict with BASE price amount (BTC: 4213, ETH: 123)
+    """
+    prices = {}
+    for symbol, prop in tickers.items():
+        if symbol.endswith("/USDT"):
+            base = symbol.split("/USDT")[0]
+            if prop['last']:
+                prices[base] = prop['last']
+    return prices
 
 
 async def update_mapper(exchanges: list[BaseExchange], session: AsyncSession) -> dict[str, list[GeckoMarkets]]:
@@ -50,8 +120,13 @@ async def update_mapper(exchanges: list[BaseExchange], session: AsyncSession) ->
 
     for exchange in exchanges:
         tickers = await _find_exchange_USDT_tickers(exchange, pairs, ex_pairs)
+        lg.info(tickers)
         try:
-            result = await exchange.fetch_tickers()
+            symbols = _get_usdt_symbols(exchange)
+            result = await _fetch_all_tickers(ex=exchange, symbols=symbols)
+            prices = _get_last_prices(result)
+            lg.info(prices)
+
             for usdt_ticker in tickers:
                 ticker = result.get(usdt_ticker, {})
                 if not ticker or not ticker.get("last"):
@@ -67,7 +142,7 @@ async def update_mapper(exchanges: list[BaseExchange], session: AsyncSession) ->
                     await set_mapper_data(session=session, mapper=mapper)
                     # mapper[cg_id].append(GeckoMarkets(symbol=ticker["symbol"], exchange=exchange))
                     success_counter += 1
-                lg.info(f"{total_counter}/{success_counter}, {data}")
+                lg.info(f"{total_counter}/{success_counter}, {data}, {cg_id}")
         except Exception as e:
             lg.error(f"{exchange.id} - {e}")
 
@@ -81,13 +156,12 @@ async def _find_exchange_USDT_tickers(ex, pairs, ex_pairs) -> list[str]:
         Для биржи находим все торговые пары {ticker}/USDT
     """
     ex_pairs[ex.id] = []
-    for market in ex.markets:
-        left = market.split(":")[0]
-        left = left.strip()
-        if left.endswith("/USDT"):
-            pairs.add(left)
-            ex_pairs[ex.id].append(left)
-            # if left not in pairs:
+    for market, prop in ex.markets.items():
+        if ":" in market or "/" not in market:  # ':' only in derivative symbol, so skip it
+            continue
+        if prop["quote"] == "USDT":
+            pairs.add(market)
+            ex_pairs[ex.id].append(market)
     ex_pairs[ex.id] = list(set(ex_pairs[ex.id]))
     lg.info(f"{ex.id}: {len(ex_pairs[ex.id])}")
     return ex_pairs[ex.id]
@@ -103,11 +177,16 @@ def match_id(coins: list, item: dict):
 
 async def main():
     from src.deps.markets import AllMarketsLoader
+    from src.db.connection import AsyncSessionFactory
     # exs = AllMarketsLoader(ccxt.exchanges)
-    exs = AllMarketsLoader(['binance', 'mexc'])
-    ex_markets = await exs.start()
-    mapper = await get_mapper(ex_markets)
-    print(mapper)
+    # exs = AllMarketsLoader(['binance', 'mexc'])
+    # exs = AllMarketsLoader(exchange_names=['bybit'])
+    exs = AllMarketsLoader()
+    await exs.start()
+    ex_markets = exs.get_target_markets(target="volume")
+    async with AsyncSessionFactory() as session:
+        mapper = await update_mapper(ex_markets, session=session)
+        print(mapper)
     await exs.close()
 
 

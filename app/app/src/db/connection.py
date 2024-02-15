@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 SQLALCHEMY_DATABASE_URL = os.environ.get("DB_URL", "postgresql+psycopg://exchange:df456Sdb34@0.0.0.0:6543/market")
-engine = create_async_engine(SQLALCHEMY_DATABASE_URL, future=True)
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL, future=True, pool_size=20)
 Base = declarative_base()
 
 AsyncSessionFactory = async_sessionmaker(engine, expire_on_commit=False)
@@ -34,6 +34,7 @@ class Volume(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     cg_id: Mapped[str] = mapped_column(primary_key=True)
+    exchange: Mapped[str] = mapped_column(primary_key=True)
     price: Mapped[float]
     volume: Mapped[float]
     update: Mapped[datetime.datetime]

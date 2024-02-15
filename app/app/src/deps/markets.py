@@ -18,7 +18,7 @@ class AllMarketsLoader:
         self.total = len(exchange_names)
         for exchange_name in exchange_names:
             exchange = getattr(ccxt, exchange_name)()
-            exchange.enableRateLimit = True
+            self._init_exchange_custom_properties(exchange)
             self.exchanges.append(exchange)
 
         lg.info(f"Exchanges: {len(self.exchanges)}")
@@ -94,7 +94,7 @@ class AllMarketsLoader:
             for exchange in ex_list:
                 if exchange.id == 'hitbtc3':
                     target_exchanges.remove(exchange)
-        if "kucoin" in names:
+        if "kraken" in names:
             for exchange in ex_list:
                 if exchange.id == 'krakenfutures':
                     target_exchanges.remove(exchange)
@@ -106,9 +106,9 @@ class AllMarketsLoader:
             for exchange in ex_list:
                 if exchange.id == 'bitfinex2':
                     target_exchanges.remove(exchange)
-        if "coinbase" in names:
+        if "coinbasepro" in names:
             for exchange in ex_list:
-                if exchange.id == 'coinbasepro':
+                if exchange.id == 'coinbase':
                     target_exchanges.remove(exchange)
         if "htx" in names:
             for exchange in ex_list:
@@ -121,3 +121,14 @@ class AllMarketsLoader:
 
         names = [exchange.id for exchange in target_exchanges]
         lg.debug(names)
+
+    def _init_exchange_custom_properties(self, exchange: BaseExchange):
+        exchange.enableRateLimit = True
+        if exchange.id == 'alpaca':
+            exchange.api_key = 'PK8KJ8UDRPSC2KSGWT0J'
+            exchange.secret = 'vrISGaZZCpsnA4TU31gvQ75DukxeGXeow4sIF2DS'
+
+        if exchange.id == 'bitmart':
+            exchange.fetch_timeout = 2
+        else:
+            exchange.fetch_timeout = 0.3

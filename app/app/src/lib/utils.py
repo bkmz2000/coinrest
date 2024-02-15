@@ -1,8 +1,11 @@
+import asyncio
+import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from ccxt.async_support.base.exchange import BaseExchange
 import datetime
 from pydantic import BaseModel, ConfigDict
+from loguru import logger as lg
 
 
 @dataclass
@@ -44,9 +47,31 @@ class LastVolume(BaseLastVolume):
 
 @dataclass
 class Coin:
+    exchange: str = ''
     volume: float = 0
     price: float = 0
+
 
 class CoinResponse(BaseModel):
     usd: float
     usd_24h_vol: float
+
+
+def sleeping(func):
+    """
+        Restart func every 5 minutes/
+        If task working more than 5 min, sleep only 2 secs
+    """
+    max_time = 300
+
+    async def wrapper(*args, **kwargs):
+        while True:
+            start_time = time.time()
+            await func(*args, **kwargs)
+            end_time = time.time() - start_time
+            to_sleep = max_time - end_time
+            if to_sleep < 0:
+                to_sleep = 2
+            await asyncio.sleep(to_sleep)
+
+    return wrapper

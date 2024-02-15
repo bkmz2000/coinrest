@@ -18,6 +18,7 @@ from src.rest import get_coins
 from src.mapper import get_mapper, update_mapper
 from src.service.logic import fetch_charts
 from src.db.connection import get_db, AsyncSessionFactory
+from src.worker import update_last_price
 
 r: Redis = None
 ex_markets: list[BaseExchange] = []
@@ -34,10 +35,11 @@ async def lifespan(app: FastAPI):
     # r = redis.Redis(host="0.0.0.0", port=6389, decode_responses=True)
     async with AsyncSessionFactory() as session:
         mapper = await get_mapper(session=session, exchanges=ex_markets)
+    update_last_price.apply_async()
 
     yield
 
-    # await exs.close()
+    await exs.close()
     await r.aclose()
 
 
@@ -77,7 +79,7 @@ async def update(session: AsyncSession = Depends(get_db)):
     exs = AllMarketsLoader()
     # exs = AllMarketsLoader(['binance', 'mexc'])
     await exs.start()
-    new_ex_markets = exs.get_target_markets(target="ohlcv")
+    new_ex_markets = exs.get_target_markets(target="volume")
     await update_mapper(exchanges=new_ex_markets, session=session)
     global mapper
     mapper = await get_mapper(session=session, exchanges=ex_markets)

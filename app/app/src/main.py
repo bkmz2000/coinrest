@@ -15,10 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.deps.markets import AllMarketsLoader
 from src.lib.utils import GeckoMarkets, ChartResponse, CoinResponse
 from src.rest import get_coins
-from src.mapper import get_mapper, update_mapper
+from src.tasks.mapper import get_mapper, update_mapper
 from src.service.logic import fetch_charts
 from src.db.connection import get_db, AsyncSessionFactory
-from src.worker import update_last_price
+from src.worker import update_last_price, update_mapper_task
 
 r: Redis = None
 ex_markets: list[BaseExchange] = []
@@ -76,13 +76,7 @@ async def update(session: AsyncSession = Depends(get_db)):
     """
         Update mapper
     """
-    exs = AllMarketsLoader()
-    # exs = AllMarketsLoader(['binance', 'mexc'])
-    await exs.start()
-    new_ex_markets = exs.get_target_markets(target="volume")
-    await update_mapper(exchanges=new_ex_markets, session=session)
-    global mapper
-    mapper = await get_mapper(session=session, exchanges=ex_markets)
-    await exs.close()
+    update_mapper_task.apply_async()
+    return {"message": "Mapper updating..."}
 
 

@@ -18,6 +18,7 @@ class AllMarketsLoader:
         self.total = len(exchange_names)
         for exchange_name in exchange_names:
             exchange = getattr(ccxt, exchange_name)()
+
             self._init_exchange_custom_properties(exchange)
             self.exchanges.append(exchange)
 
@@ -57,7 +58,6 @@ class AllMarketsLoader:
 
     def _get_target_exchanges(self) -> list[BaseExchange]:
         target_exchanges = []
-        lg.debug("sorting target exchanges")
         lg.debug(len(self.exchanges))
 
         if self.target == "ohlcv":
@@ -67,8 +67,8 @@ class AllMarketsLoader:
 
         elif self.target == "volume":
             for exchange in self.exchanges:
-                if exchange.has["fetchTickers"]:
-                    target_exchanges.append(exchange)
+                # if exchange.has["fetchTickers"]:
+                target_exchanges.append(exchange)
 
             self._remove_duplicate_exchanges(target_exchanges)
         else:
@@ -117,6 +117,10 @@ class AllMarketsLoader:
         if "gate" in names:
             for exchange in ex_list:
                 if exchange.id == 'gateio':
+                    target_exchanges.remove(exchange)
+        if "kucoin" in names:
+            for exchange in ex_list:
+                if exchange.id == 'kucoinfutures':
                     target_exchanges.remove(exchange)
 
         names = [exchange.id for exchange in target_exchanges]

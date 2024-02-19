@@ -57,6 +57,16 @@ class CoinResponse(BaseModel):
     usd_24h_vol: float | None
 
 
+class QuoteRate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    currency: str
+    rate: float
+    update_at: datetime.datetime | None = None
+
+
+
+
 def sleeping(func):
     """
         Restart func every 5 minutes/

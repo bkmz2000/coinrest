@@ -118,10 +118,11 @@ async def get_coins(session: AsyncSession):
     return result
 
 
+
 async def main():
     from src.deps.markets import AllMarketsLoader
 
-    exs = AllMarketsLoader(exchange_names=["htx"])
+    exs = AllMarketsLoader(exchange_names=["binance"])
     # exs = AllMarketsLoader()
     await exs.start()
     exchanges = exs.get_target_markets(target="volume")

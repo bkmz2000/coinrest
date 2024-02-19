@@ -2,11 +2,14 @@ import asyncio
 from src.celery_app import app
 from src.tasks.refresh import cache_refresh
 from src.tasks.last_price import main as last_price
+from src.tasks.mapper import main as update_mapper
+from src.tasks.rates import main as update_quote_currency
 
 
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
     ...
+    sender.add_periodic_task(300.0, update_quote_currency_task.s(), name="Update quote currency rates")
     # sender.add_periodic_task(300.0, refresh_5m_cache.s(), name='Update 5min charts cache')
     # sender.add_periodic_task(3600.0, refresh_1h_cache.s(), name='Update 1hour charts cache')
     # sender.add_periodic_task(86400.0, refresh_1d_cache.s(), name='Update 1day charts cache')
@@ -31,3 +34,11 @@ def refresh_1d_cache():
 @app.task()
 def update_last_price():
     asyncio.run(last_price())
+
+@app.task
+def update_mapper_task():
+    asyncio.run(update_mapper())
+
+@app.task
+def update_quote_currency_task():
+    asyncio.run(update_quote_currency())

@@ -6,7 +6,7 @@ from sqlalchemy import select, func, text
 from sqlalchemy.dialects.postgresql import insert
 from loguru import logger as lg
 
-from src.db.connection import Mapper, Volume
+from src.db.connection import Mapper, Volume, QuoteMapper
 from src.lib import utils
 from src.lib.utils import Coin
 
@@ -30,11 +30,23 @@ async def set_mapper_data(session: AsyncSession, mapper: utils.BaseMapper):
     await session.commit()
 
 
-async def get_exchange_cg_ids(session: AsyncSession, exchange_id: str):
+async def get_exchange_cg_ids(session: AsyncSession, exchange_id: str) -> list[dict]:
     stmt = select(Mapper.cg_id, Mapper.symbol).where(Mapper.exchange == exchange_id)
     result = await session.execute(stmt)
     result = result.mappings()
     result = [dict(res) for res in result]
+    return result
+
+
+async def get_cg_mapper(session: AsyncSession, exchange_id: str) -> dict[str, str]:
+    stmt = select(Mapper.cg_id, Mapper.symbol, Mapper.exchange).where(Mapper.exchange == exchange_id)
+    result = await session.execute(stmt)
+    result = result.mappings()
+    result = {
+        utils.BaseMapper.model_validate(res).symbol:
+            utils.BaseMapper.model_validate(res).cg_id for res in result
+    }
+    # result = [dict(res) for res in result]
     return result
 
 
@@ -73,9 +85,36 @@ async def get_coins_from_db(session: AsyncSession):
     return result
 
 
+async def update_quote_mapper(session: AsyncSession, rates: list[utils.QuoteRate]):
+    rates_list = [dict(currency=rate.currency, rate=rate.rate, update_at=rate.update_at) for rate in rates]
+    lg.info(rates_list)
+    stmt = insert(QuoteMapper).values(rates_list)
+    update = stmt.on_conflict_do_update(
+        index_elements=[QuoteMapper.currency],
+        set_=dict(
+            rate=stmt.excluded.rate,
+            update_at=stmt.excluded.update_at,
+        )
+    )
+    await session.execute(update)
+    await session.commit()
+
+
+async def get_converter(session: AsyncSession) -> dict[str, float]:
+    stmt = select(QuoteMapper.currency, QuoteMapper.rate)
+    result = await session.execute(stmt)
+    result = result.mappings()
+    result = {
+        utils.QuoteRate.model_validate(res).currency:
+            utils.QuoteRate.model_validate(res).rate for res in result
+    }
+    return result
+
+
 async def main():
     async with AsyncSessionFactory() as session:
-        result = await get_coins_from_db(session=session)
+        # result = await get_coins_from_db(session=session)
+        result = await get_converter(session=session)
         lg.debug(result)
 
 

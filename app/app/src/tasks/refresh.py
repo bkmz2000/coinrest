@@ -7,7 +7,7 @@ from src.db.crud import get_mapper_data
 from src.db.connection import AsyncSessionFactory
 from loguru import logger as lg
 from src.tasks.task import set_cache_task
-from src.mapper import get_mapper
+from src.tasks.mapper import get_mapper
 
 
 async def cache_refresh(timeframe: str) -> None:

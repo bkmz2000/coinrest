@@ -6,6 +6,7 @@ import ccxt.async_support as ccxt
 from ccxt.async_support.base.exchange import BaseExchange
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.connection import AsyncSessionFactory
+from loguru import logger as lg
 
 from src.db.crud import get_coins_from_db
 from src.lib import utils
@@ -35,7 +36,7 @@ async def fetch_all_ohlcv(exchanges: list[utils.GeckoMarkets], timeframe: str) -
 
 async def fetch_ohlcv_loop(exchange: BaseExchange, symbol: str, timeframe: str) -> dict[str, list[tuple[int, float]]]:
     limit = frames[timeframe]
-    ohlcv = await exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
+    ohlcv = await exchange.fetch_ohlcv(symbol + "/USDT", timeframe, limit=limit)
     if len(ohlcv) < int(limit) and timeframe != "1d":
         raise Exception("Not enough data")
     _check_fresh(ohlcv, timeframe)

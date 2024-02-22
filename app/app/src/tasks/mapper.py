@@ -4,18 +4,16 @@ from ccxt.async_support.base.exchange import BaseExchange
 from collections import defaultdict
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.deps.markets import AllMarketsLoader
+from src.db.connection import AsyncSessionFactory
 from src.lib.client import fetch_data_from_hodler
-from src.lib.utils import GeckoMarkets, BaseMapper
-from src.deps.converter import Converter
-from src.db.crud import set_mapper_data, get_mapper_data, get_exchange_cg_ids
-from src.tasks.methods import get_all_market_symbols, fetch_all_tickers
+from src.lib.utils import GeckoMarkets
+from src.lib.schema import TickerToMatch, TickerMatched
+from src.db import crud
 
 
 async def get_mapper(exchanges: list[BaseExchange], session: AsyncSession) -> dict[str, list[GeckoMarkets]]:
     lg.info(f"Loading mapper from database")
-    data = await get_mapper_data(session=session)
+    data = await crud.get_mapper_data(session=session)
     mapper = defaultdict(list)
     for market in data:
         for exchange in exchanges:
@@ -29,7 +27,7 @@ async def get_mapper(exchanges: list[BaseExchange], session: AsyncSession) -> di
 
 async def get_cg_ids(session: AsyncSession, exchange_id: str):
     ids = {}
-    cg_ids = await get_exchange_cg_ids(session=session, exchange_id=exchange_id)
+    cg_ids = await crud.get_exchange_cg_ids(session=session, exchange_id=exchange_id)
     for market in cg_ids:
         base = market['symbol'].split("/")[0]
         ids[base] = market['cg_id']
@@ -37,40 +35,39 @@ async def get_cg_ids(session: AsyncSession, exchange_id: str):
     return ids
 
 
-
-async def update_mapper(exchanges: list[BaseExchange]):
+async def update_mapper():
+    """
+        Updates tickers/coingecko ids for all exchanges for all tickers
+    :return:
+    """
     lg.info("Updating mapper")
     coins = await fetch_data_from_hodler()
-    # coins = []
-
-    for exchange in exchanges:
-        try:
-            async with Converter(exchange=exchange, geckos=coins) as converter:
-                symbols = get_all_market_symbols(exchange)
-                tickers = await fetch_all_tickers(ex=exchange, symbols=symbols)
-                for symbol, prop in tickers.items():
-                    # lg.info(f"{symbol}: {prop}")
-                    last_price = prop.get("last")
-                    await converter.match_and_save(symbol, price=last_price)
-        except Exception as e:
-            lg.error(f"{exchange.id} - {e}")
+    matched = []
+    async with AsyncSessionFactory() as session:
+        db_tickers = await crud.get_db_tickers(session=session)
+        for ticker in db_tickers:
+            matched_ticker = match(coins, ticker)
+            if matched_ticker:
+                matched.append(matched_ticker)
+        lg.info(f"Matched tickers: {len(matched)}/{len(db_tickers)}")
+        await crud.save_matched_tickers(session=session, tickers=matched)
 
 
-def match_id(coins: list, item: dict):
-    exchange_symbol = item.get("symbol")
-
+def match(coins: list, ticker: TickerToMatch) -> TickerMatched | None:
+    """
+        Match symbol with current price to coingecko_id
+    :param coins: coingecko ids with actual prices
+    :param ticker: ticker from db, we try to match
+    :return: Matched ticker to coingecko id or None
+    """
     for coin in coins:
-        if coin["symbol"] == exchange_symbol:
-            if 0.95 <= coin["quote"]["USD"]["price"] / item["value"] <= 1.05:
-                return coin["cgid"]
+        if coin["symbol"] == ticker.base:
+            if 0.85 <= coin["quote"]["USD"]["price"] / ticker.price_usd <= 1.15:
+                return TickerMatched(id=ticker.id, base_cg=coin["cgid"])
 
 
 async def main():
-    exs = AllMarketsLoader()
-    await exs.start()
-    ex_markets = exs.get_target_markets(target="volume")
-    await update_mapper(ex_markets)
-    await exs.close()
+    await update_mapper()
 
 
 

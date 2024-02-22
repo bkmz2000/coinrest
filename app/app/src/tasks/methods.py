@@ -10,6 +10,7 @@ important_field = {
     "vol": 'baseVolume'
 }
 
+
 async def fetch_all_tickers(ex: BaseExchange, symbols: set, target: Literal['map', 'vol'] = 'map') -> dict:
     """
         Fetch tickers with 3 steps:
@@ -32,7 +33,7 @@ async def fetch_all_tickers(ex: BaseExchange, symbols: set, target: Literal['map
             tickers = await ex.fetch_tickers()
             result.update(tickers)
 
-            lg.debug(len(tickers))
+            # lg.debug(len(tickers))
             for symbol, prop in tickers.items():
                 field = prop.get(target)
                 if symbol in symbols:
@@ -50,14 +51,14 @@ async def fetch_all_tickers(ex: BaseExchange, symbols: set, target: Literal['map
     if not symbols:
         return result
 
-    lg.debug(f"{ex.id} has {len(symbols)} not in tickers, returned: {returned}")
+    # lg.debug(f"{ex.id} has {len(symbols)} not in tickers, returned: {returned}")
     # If some symbol not in tickers, try to fetch them as a batch
     l_symbols = list(symbols)
     batch = 50
     for i in range(0, len(symbols), batch):
         await asyncio.sleep(ex.fetch_timeout)
         try:
-            lg.debug(f"{ex.id}: {l_symbols[i:i + batch][:10]}, {i}, {i + batch}")
+            # lg.debug(f"{ex.id}: {l_symbols[i:i + batch][:10]}, {i}, {i + batch}")
             tickers = await ex.fetch_tickers(symbols=l_symbols[i:i + batch])
             result.update(tickers)
 
@@ -75,7 +76,7 @@ async def fetch_all_tickers(ex: BaseExchange, symbols: set, target: Literal['map
     if not symbols:
         return result
 
-    lg.debug(f"{ex.id} has {len(symbols)} to fetch by one")
+    # lg.debug(f"{ex.id} has {len(symbols)} to fetch by one")
     # If some symbol not in tickers, try to fetch them one by one
     for symbol in symbols:
         if ":" in symbol or "/" not in symbol:
@@ -83,7 +84,7 @@ async def fetch_all_tickers(ex: BaseExchange, symbols: set, target: Literal['map
         await asyncio.sleep(ex.fetch_timeout)
         try:
             ticker = await ex.fetch_ticker(symbol)
-            lg.debug(f"{ex.id} fetched ticker: {ticker}")
+            # lg.debug(f"{ex.id} fetched ticker: {ticker}")
             result[symbol] = ticker
         except Exception as e:
             # if "delisted" in str(e):
@@ -101,4 +102,5 @@ def get_all_market_symbols(ex: BaseExchange) -> set:
         if ":" in symbol or "/" not in symbol:  # ':' and no '/' only in derivative symbol, skip it
             continue
         symbols.add(symbol)
+
     return symbols

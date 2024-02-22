@@ -1,52 +1,41 @@
 import asyncio
-from collections import defaultdict
 from loguru import logger as lg
 from src.deps.markets import AllMarketsLoader
-from ccxt.async_support.base.exchange import BaseExchange
-from src.db.crud import save_last_volumes
-from src.deps.converter import Converter
-from src.lib import utils
-from src.tasks.methods import get_all_market_symbols, fetch_all_tickers
-from src.db.connection import AsyncSessionFactory
+from src.deps.markets import Market
+from src.lib.quotes import active_exchanges
 from src.lib.utils import sleeping
 
 quotes = []
 
 async def main():
-    # exs = AllMarketsLoader(exchange_names=["binance"])
-    exs = AllMarketsLoader()
-    await exs.start()
-    exchanges = exs.get_target_markets(target="volume")
-
+    exchanges = active_exchanges
     await asyncio.gather(*[get_price_and_volume(ex=ex) for ex in exchanges])
-    await exs.close()
 
 
 @sleeping
-async def get_price_and_volume(ex: BaseExchange):
+async def get_price_and_volume(ex: str):
     """
-        Get last price and volume for exchange and store it to db
+        Get last price and volume for exchange tickers and store them to db
     """
-    coins = defaultdict(utils.Coin)
-    async with Converter(exchange=ex) as converter:
-        symbols = get_all_market_symbols(ex)
-        tickers = await fetch_all_tickers(ex=ex, symbols=symbols, target='vol')
-        for symbol, prop in tickers.items():
-        #     lg.debug(f"{symbol}: {prop}")
-            converter.get_volumes(symbol, prop, coins)
-        # for k, v in coins.items():
-        #     lg.debug(f"{k}: {v}")
-    async with AsyncSessionFactory() as session:
-        await save_last_volumes(session=session, coins=coins)
+    try:
+        normalized_tickers = []
+        async with Market(exchange_name=ex) as market:
+            symbols = market.get_all_market_symbols()
+            tickers = await market.fetch_all_tickers(symbols=symbols, target='vol')
+            for symbol, prop in tickers.items():
+                ticker = market.converter.get_normalized_ticker(symbol, prop)
+                if ticker:
+                    normalized_tickers.append(ticker)
+            lg.info(f"{market.exchange_name} normalize {len(normalized_tickers)} tickers")
+            await market.save_tickers(normalized_tickers)
+    except Exception as e:
+        lg.error(e)
 
 
 async def mmain():
-    # exs = AllMarketsLoader(exchange_names=["coinbasepro"])
-    exs = AllMarketsLoader()
-    await exs.start()
-    exchanges = exs.get_target_markets(target="volume")
+    exchanges = active_exchanges
+    # exchanges = ['orangex']
     await asyncio.gather(*[get_price_and_volume(ex=ex) for ex in exchanges])
-    await exs.close()
 
 
 if __name__ == "__main__":

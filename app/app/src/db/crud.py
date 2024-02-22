@@ -1,13 +1,17 @@
 import asyncio
 import datetime
+import time
+from dataclasses import asdict
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, text
+from sqlalchemy import select, func, text, update, null
 from sqlalchemy.dialects.postgresql import insert
 from loguru import logger as lg
 
-from src.db.connection import Mapper, Volume, QuoteMapper
+from src.db.connection import AsyncSessionFactory
+from src.db.connection import Mapper, Volume, QuoteMapper, Ticker, Exchange
 from src.lib import utils
+from src.lib.schema import TickerInfo, TickerMatched, TickerToMatch
 from src.lib.utils import Coin
 
 
@@ -67,27 +71,38 @@ async def save_last_volumes(session: AsyncSession, coins: dict[str, Coin]):
 
 
 async def get_coins_from_db(session: AsyncSession):
-    stmt = text("""SELECT 
-                        q.cg_id,
-                        sum(q.volume) as volume,
-                        (SELECT max(price) FROM  
-                            (SELECT price, volume FROM last_volumes WHERE cg_id = q.cg_id) as q1 
-                            WHERE q1.volume = (SELECT max(volume) FROM last_volumes WHERE cg_id = q.cg_id)
+    stmt = text("""
+        SELECT gecko as cg_id, sum(volume_usd) as volume, max(price) as price FROM (
+                SELECT 
+                        q.base_cg as gecko,
+                        sum(q.volume_usd) as volume_usd,
+                        (SELECT max(price_usd) FROM  
+                            (SELECT price_usd, volume_usd FROM ticker WHERE base_cg = q.base_cg) as q1 
+                            WHERE q1.volume_usd = (SELECT max(volume_usd) FROM ticker WHERE base_cg = q.base_cg)
                         ) as price
-                FROM last_volumes as q
-                GROUP BY q.cg_id
-                ORDER BY volume DESC;
-                """
-                )
+                FROM ticker q
+                GROUP BY q.base_cg
+            UNION ALL 
+                SELECT 
+                    q.quote_cg as gecko,
+                    sum(q.volume_usd) as volume_usd,
+                    0 as price
+                FROM ticker q
+                GROUP BY q.quote_cg
+            ) total
+            GROUP BY gecko
+            ORDER BY sum(volume_usd) DESC;
+                """)
+
     result = await session.execute(stmt)
     result = result.mappings()
     result = [utils.BaseLastVolume.model_validate(res) for res in result]
+
     return result
 
 
 async def update_quote_mapper(session: AsyncSession, rates: list[utils.QuoteRate]):
     rates_list = [dict(currency=rate.currency, rate=rate.rate, update_at=rate.update_at) for rate in rates]
-    lg.info(rates_list)
     stmt = insert(QuoteMapper).values(rates_list)
     update = stmt.on_conflict_do_update(
         index_elements=[QuoteMapper.currency],
@@ -110,14 +125,82 @@ async def get_converter(session: AsyncSession) -> dict[str, float]:
     }
     return result
 
+async def save_tickers(session: AsyncSession, tickers: list[TickerInfo]):
+    if not tickers:
+        return
+    exchange_name = tickers[0].exchange_id
+    # stmt = select(Exchange.id).where(Exchange.name == exchange_name).select_from(Exchange).scalar_subquery()
+    stmt = select(Exchange.id).where(Exchange.name == exchange_name)
+    exchange_id = await session.execute(stmt)
+    exchange_id = exchange_id.scalar()
+    if not exchange_id:
+        return
+    ticker_list = [dict(exchange_id=exchange_id,
+                        base=ticker.base,
+                        base_cg=ticker.base_cg,
+                        quote=ticker.quote,
+                        quote_cg=ticker.quote_cg,
+                        price=ticker.price,
+                        price_usd=ticker.price_usd,
+                        base_volume=ticker.base_volume,
+                        quote_volume=ticker.quote_volume,
+                        volume_usd=ticker.volume_usd,
+                        last_update=int(time.time())
+                        ) for ticker in tickers]
+    insert_stmt = insert(Ticker).values(ticker_list)
+    update_stmt = insert_stmt.on_conflict_do_update(
+        index_elements=[Ticker.exchange_id, Ticker.base, Ticker.quote],
+        set_=dict(
+            price=insert_stmt.excluded.price,
+            price_usd=insert_stmt.excluded.price_usd,
+            base_volume=insert_stmt.excluded.base_volume,
+            quote_volume=insert_stmt.excluded.quote_volume,
+            volume_usd=insert_stmt.excluded.volume_usd,
+            last_update=int(time.time())
+        )
+    )
+    await session.execute(update_stmt)
+    await session.commit()
+
+
+async def get_db_tickers(session: AsyncSession) -> list[TickerToMatch]:
+    stmt = (select(Ticker.id, Ticker.base, Ticker.price_usd).
+            where(Ticker.price_usd > 0).
+            where(Ticker.base_cg.is_(null()))
+            )
+    result = await session.execute(stmt)
+    result = result.mappings()
+    result = [TickerToMatch.model_validate(res) for res in result]
+    return result
+
+
+async def save_matched_tickers(session: AsyncSession, tickers: list[TickerMatched]):
+    ticker_list = [ticker.model_dump() for ticker in tickers]
+    await session.execute(update(Ticker), ticker_list)
+    await session.commit()
+
+
+async def set_exchanges(session: AsyncSession, exchanges: list):
+    exs = [dict(name=exchange) for exchange in exchanges]
+    stmt = insert(Exchange).values(exs)
+    await session.execute(stmt)
+    await session.commit()
 
 async def main():
+    ...
+    # from src.lib.quotes import active_exchanges
     async with AsyncSessionFactory() as session:
-        # result = await get_coins_from_db(session=session)
-        result = await get_converter(session=session)
+    #     await set_exchanges(session, active_exchanges)
+        # tickers = [TickerMatched(id=6313, base_cg="BTC")]
+        # await save_matched_tickers(session, tickers)
+        result = await get_coins_from_db(session=session)
+        # l = [TickerInfo(exchange_id='hotcoinglobal', base='ARB', base_cg=None, quote='USDT', quote_cg=None, price=1.839, price_usd=1.8392390699999999, base_volume=3977992.3, quote_volume=0, volume_usd=7316478.8583191605),
+        #      TickerInfo(exchange_id='hotcoinglobal', base='BTM', base_cg=None, quote='USDT', quote_cg=None, price=0.010077, price_usd=0.01007831001, base_volume=27628613.855, quote_volume=0, volume_usd=278449.7355772712)
+        #      ]
+        # await save_tickers(session=session, tickers=l)
+        # result = await get_converter(session=session)
         lg.debug(result)
 
 
 if __name__ == "__main__":
-    from src.db.connection import AsyncSessionFactory
     asyncio.run(main())

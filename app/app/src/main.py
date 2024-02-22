@@ -28,6 +28,7 @@ mapper: dict[str, list[GeckoMarkets]] = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global ex_markets, mapper, r
+    # exs = AllMarketsLoader(exchange_names=['binance'])
     exs = AllMarketsLoader()
     await exs.start()
     ex_markets = exs.get_target_markets(target='ohlcv')

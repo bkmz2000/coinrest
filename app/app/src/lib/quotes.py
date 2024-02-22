@@ -1,3 +1,125 @@
+quote_mapper = {
+    "USDT": "tether",
+    "BTC": "bitcoin",
+    "ETH": "ethereum",
+    "USDC": "usd-coin",
+    "BUSD": "binance-usd",
+    "BNB": "binancecoin",
+    "TUSD": "true-usd",
+    "USDD": "usdd",
+    "XRP": "ripple",
+    "FDUSD": "first-digital-usd",
+    "DAI": "dai",
+    "TRX": "tron",
+    "ADA": "cardano",
+    "BCH": "bitcoin-cash",
+    "BIDR": "binanceidr",
+    "KCS": "kucoin-shares",
+    "WRX": "wazirx",
+    "EOS": "eos",
+    "SOL": "solana",
+    "USDP": "paxos-standard",
+    "XTN": "neutrino",
+    "PAX": "paxos-standard",
+}
+
+active_exchanges = (
+    'ace',
+    'alpaca',
+    'ascendex',
+    'bequant',
+    'bigone',
+    'binance',
+    'bingx',
+    'bit2c',
+    'bitbank',
+    'bitbay',
+    'bitbns',
+    'bitcoincom',
+    'bitfinex',
+    'bitflyer',
+    'bitforex',
+    'bitget',
+    'bithumb',
+    'bitmart',
+    'bitmex',
+    'bitopro',
+    'bitpanda',
+    'bitrue',
+    'bitso',
+    'bitstamp',
+    'bitteam',
+    'bitvavo',
+    'bl3p',
+    'blockchaincom',
+    'btcbox',
+    'btcmarkets',
+    'btcturk',
+    'bybit',
+    'cex',
+    'coinbasepro',
+    'coincheck',
+    'coinex',
+    'coinlist',
+    'coinmate',
+    'coinone',
+    'coinsph',
+    # 'coinspot',
+    'cryptocom',
+    'currencycom',
+    'delta',
+    'deribit',
+    'digifinex',
+    'exmo',
+    'fmfwio',
+    'gateio',
+    'gemini',
+    'hitbtc',
+    'hollaex',
+    'htx',
+    'idex',
+    'independentreserve',
+    'indodax',
+    'kraken',
+    'kucoin',
+    'kuna',
+    'latoken',
+    'lbank',
+    'luno',
+    'lykke',
+    'mercado',
+    'mexc',
+    'ndax',
+    'novadax',
+    'oceanex',
+    'okcoin',
+    'okx',
+    'onetrading',
+    'p2b',
+    'paymium',
+    'phemex',
+    'poloniex',
+    'probit',
+    'timex',
+    'tokocrypto',
+    'upbit',
+    'wavesexchange',
+    'wazirx',
+    'whitebit',
+    'woo',
+    'yobit',
+    'zaif',
+    'zonda',
+
+    'cointrpro',
+    'coinw',
+    'deepcoin',
+    'hotcoinglobal',
+    'orangex',
+    'toobit',
+    'xtcom',
+)
+
 quotes = ['CRO', 'LA', 'TRX', 'HIT', 'TESTUSDT', 'EUTF0', 'BVND', 'USDCBSC', 'BIDR', 'PZM', 'USDT', 'DGLD', 'TWD',
           'PLN', 'UST', 'USDTBSC', 'BGN', 'CAD', 'ZAR', 'UAHG', 'ETH', 'USDCAVALANCHE', 'BYN', 'CNHT', 'BRL', 'GEL',
           'BTC-WXG', 'USDC-BEP20', 'BTC', 'WRX', 'VET', 'EOSDT', 'USDT-BEP20', 'SBTC', 'WAVES', 'KRW', 'PYUSD',
@@ -9,33 +131,48 @@ quotes = ['CRO', 'LA', 'TRX', 'HIT', 'TESTUSDT', 'EUTF0', 'BVND', 'USDCBSC', 'BI
           'TESTUSD', 'TRY', 'DEL', 'USDTPOLYGON', 'USDC', 'ADA', 'BTCB', 'EUR', 'RUB', 'FDUSD', 'SATS', 'BTR', 'NZD',
           'XAUT', 'USDT-ERC20', 'GRB', 'SEK', 'BKRW', 'TRY20', 'DAI', 'USDS', 'IDRT', 'LTC']
 
-counters = {'USDT': 18860,
-            'BTC': 3216,
-            'ETH': 1820,
-            'USD': 1583,
-            'USDC': 1001,
-            'EUR': 800,
-            'TRY': 468,
-            'INR': 383,
-            'BUSD': 381,
-            'BRL': 345,
-            'BNB': 289,
-            'PLN': 163,
-            'GBP': 157,
-            'KRW': 119,
-            'TUSD': 102,
-            'USDD': 85,
-            'XRP': 83,
-            'FDUSD': 65,
-            'USTF0': 64,
-            'DAI': 58,
-            'XTN': 51,
-            'AUD': 40,
-            'TRX': 39,
-            'PAX': 39,
-            'CHF': 38,
-            'JPY': 37, 'ADA': 34, 'UAH': 33, 'BCH': 28, 'RUB': 27, 'BIDR': 27, 'HIT': 23, 'KCS': 23, 'HKD': 21,
-            'TWD': 20, 'WRX': 19, 'EOS': 18, 'SOL': 18, 'EOSDT': 17, 'USDP': 16, 'EURS': 16, 'VET': 16, 'TESTUSD': 16,
+counters = {'USDT': 18860, # +
+            'BTC': 3216, # +
+            'ETH': 1820, # +
+            'USD': 1583,# +
+            'USDC': 1001, # +
+            'EUR': 800, # -
+            'TRY': 468,# -
+            'INR': 383,# -
+            'BUSD': 381,# +
+            'BRL': 345, #-
+            'BNB': 289, #+
+            'PLN': 163,#-
+            'GBP': 157,#-
+            'KRW': 119,#-
+            'TUSD': 102,#+
+            'USDD': 85,#+
+            'XRP': 83,#+
+            'FDUSD': 65,#+
+            'USTF0': 64, #-
+            'DAI': 58, #+
+            'XTN': 51, #+
+            'AUD': 40,#-
+            'TRX': 39,#+
+            'PAX': 39,#+
+            'CHF': 38,#-
+            'JPY': 37,#-
+            'ADA': 34,#+
+            'UAH': 33,#-
+            'BCH': 28,#+
+            'RUB': 27,#-
+            'BIDR': 27,#+
+            'HIT': 23,
+            'KCS': 23,#+
+            'HKD': 21,#-
+            'TWD': 20,#-
+            'WRX': 19,#+
+            'EOS': 18,#+
+            'SOL': 18,#+
+            'EOSDT': 17,
+            'USDP': 16,#+
+            'EURS': 16,
+            'VET': 16, 'TESTUSD': 16,
             'TESTUSDTF0': 16, 'WAVES': 14, 'CAD': 13, 'SGD': 13, 'NGN': 12, 'ZAR': 11, 'BKRW': 11, 'BTR': 11, 'MXN': 10,
             'SEK': 10, 'LA': 10, 'AUDT': 9, 'PYUSD': 8, 'CNH': 7, 'USDT-WXG': 7, 'EURST': 6, 'DEL': 6, 'BYN': 6,
             'NOK': 6, 'USDC-WXG': 6, 'IDRT': 5, 'EURT': 5, 'CZK': 5, 'DKK': 5, 'SATS': 5, 'USDT-ERC20': 5, 'BTCF0': 5,

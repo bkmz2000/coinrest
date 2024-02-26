@@ -10,7 +10,7 @@ from ccxt.async_support.base.exchange import BaseExchange
 from contextlib import asynccontextmanager
 from loguru import logger as lg
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from starlette.middleware.cors import CORSMiddleware
 
 from src.deps.markets import AllMarketsLoader
 from src.lib.utils import GeckoMarkets, ChartResponse, CoinResponse
@@ -19,6 +19,7 @@ from src.tasks.mapper import get_mapper, update_mapper
 from src.service.logic import fetch_charts
 from src.db.connection import get_db, AsyncSessionFactory
 from src.worker import update_last_price, update_mapper_task
+from src.api.routers import api_router
 
 r: Redis = None
 ex_markets: list[BaseExchange] = []
@@ -45,6 +46,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.include_router(api_router)
+
 
 
 @app.get("/ping/{val}")
@@ -79,5 +89,3 @@ async def update(session: AsyncSession = Depends(get_db)):
     """
     update_mapper_task.apply_async()
     return {"message": "Mapper updating..."}
-
-

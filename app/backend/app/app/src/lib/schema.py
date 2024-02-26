@@ -24,3 +24,20 @@ class TickerToMatch(BaseModel):
 class TickerMatched(BaseModel):
     id: int
     base_cg: str
+
+
+class TickerResponse(BaseModel):
+    name: str
+    base: str
+    base_cg: str | None
+    quote: str
+    price_usd: float
+    volume_usd: float
+    last_update: int
+
+
+class ExchangeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    trust: int | None

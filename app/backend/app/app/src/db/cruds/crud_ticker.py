@@ -1,3 +1,5 @@
+import time
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 
@@ -48,9 +50,13 @@ class TickerCRUD:
         return [TickerResponse.model_validate(res) for res in result]
 
     async def get_top_tickers(self, session: AsyncSession):
+        unix_stamp_now = int(time.time()) - 10800  # 3 hours
         base_volume = (select(Ticker.base_cg.label("gecko"), func.sum(Ticker.volume_usd).label("volume_usd"))
+                       .where(Ticker.last_update >= unix_stamp_now)
                        .group_by(Ticker.base_cg).select_from(Ticker))
+
         quote_volume = (select(Ticker.quote_cg.label("gecko"), func.sum(Ticker.volume_usd).label("volume_usd"))
+                        .where(Ticker.last_update >= unix_stamp_now)
                         .group_by(Ticker.quote_cg).select_from(Ticker))
 
         stmt = (

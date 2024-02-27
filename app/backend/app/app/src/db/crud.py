@@ -78,9 +78,14 @@ async def get_coins_from_db(session: AsyncSession):
                         sum(q.volume_usd) as volume_usd,
                         (SELECT max(price_usd) FROM  
                             (SELECT price_usd, volume_usd FROM ticker WHERE base_cg = q.base_cg) as q1 
-                            WHERE q1.volume_usd = (SELECT max(volume_usd) FROM ticker WHERE base_cg = q.base_cg)
+                            WHERE q1.volume_usd = (
+                                SELECT max(volume_usd) 
+                                FROM ticker 
+                                WHERE base_cg = q.base_cg 
+                                AND last_update >= :stamp)
                         ) as price
                 FROM ticker q
+                WHERE last_update >= :stamp
                 GROUP BY q.base_cg
             UNION ALL 
                 SELECT 
@@ -88,13 +93,15 @@ async def get_coins_from_db(session: AsyncSession):
                     sum(q.volume_usd) as volume_usd,
                     0 as price
                 FROM ticker q
+                WHERE q.base_cg IS NOT NULL
+                AND last_update >= :stamp
                 GROUP BY q.quote_cg
             ) total
             GROUP BY gecko
             ORDER BY sum(volume_usd) DESC;
                 """)
-
-    result = await session.execute(stmt)
+    unix_stamp_now = int(time.time()) - 10800  # 3 hours
+    result = await session.execute(stmt, params=[{"stamp": unix_stamp_now}])
     result = result.mappings()
     result = [utils.BaseLastVolume.model_validate(res) for res in result]
 
@@ -165,8 +172,8 @@ async def save_tickers(session: AsyncSession, tickers: list[TickerInfo]):
 
 async def get_db_tickers(session: AsyncSession) -> list[TickerToMatch]:
     stmt = (select(Ticker.id, Ticker.base, Ticker.price_usd).
-            where(Ticker.price_usd > 0).
-            where(Ticker.base_cg.is_(null()))
+            where(Ticker.price_usd > 0)
+            # where(Ticker.base_cg.is_(null()))
             )
     result = await session.execute(stmt)
     result = result.mappings()

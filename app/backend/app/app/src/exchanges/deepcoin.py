@@ -43,11 +43,11 @@ class deepcoin:
             symbol = self._convert_symbol_to_ccxt(row.get('instId'))
             last = float(row.get('last', 0))
             currency_volume = last * float(row.get('vol24h', 0))
-            contact_volume = float(row.get('volCcy24h', 0))
+            # contact_volume = float(row.get('volCcy24h', 0))
             normalized_data[symbol] = {
                 "last": last,
                 "baseVolume": 0,
-                "quoteVolume": currency_volume + contact_volume
+                "quoteVolume": currency_volume
             }
 
         return normalized_data

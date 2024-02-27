@@ -34,13 +34,13 @@ class bullish:
                 self.markets[base+quote] = base + "/" + quote
 
     async def fetch_data(self, url: str):
-        connector = ProxyConnector(
-            proxy_type=ProxyType.SOCKS5,
-            host='127.0.0.1',
-            port=9999,
-            rdns=True
-        )
-        async with aiohttp.ClientSession(connector=connector) as session:
+        # connector = ProxyConnector(
+        #     proxy_type=ProxyType.SOCKS5,
+        #     host='127.0.0.1',
+        #     port=9999,
+        #     rdns=True
+        # )
+        async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 if resp and resp.status == 200:
                     data = await resp.json()

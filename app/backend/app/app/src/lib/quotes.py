@@ -118,6 +118,9 @@ active_exchanges = (
     'orangex',
     'toobit',
     'xtcom',
+    'tapbit',
+    'pionex',
+    'bullish',
 )
 
 quotes = ['CRO', 'LA', 'TRX', 'HIT', 'TESTUSDT', 'EUTF0', 'BVND', 'USDCBSC', 'BIDR', 'PZM', 'USDT', 'DGLD', 'TWD',

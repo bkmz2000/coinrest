@@ -1,6 +1,6 @@
 import aiohttp
-from aiohttp_proxy import ProxyConnector, ProxyType
-from ccxt.async_support.base.exchange import BaseExchange
+# from aiohttp_proxy import ProxyConnector, ProxyType
+# from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
 
 

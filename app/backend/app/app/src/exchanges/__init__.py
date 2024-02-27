@@ -5,3 +5,6 @@ from src.exchanges.xtcom import xtcom
 from src.exchanges.deepcoin import deepcoin
 from src.exchanges.cointrpro import cointrpro
 from src.exchanges.hotcoinglobal import hotcoinglobal
+from src.exchanges.pionex import pionex
+from src.exchanges.bullish import bullish
+from src.exchanges.tapbit import tapbit

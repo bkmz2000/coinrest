@@ -3,24 +3,23 @@ from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
 
 
-class deepcoin:
+class tapbit:
     """
-        docs: https://www.deepcoin.com/en/docs#deepcoin-market-tickers
+        docs: https://www.tapbit.com/openapi-docs/spot/public/ticker_list/
     """
     def __init__(self):
-        self.id = 'deepcoin'
-        self.base_url = "https://api.deepcoin.com/deepcoin/"
+        self.id = 'tapbit'
+        self.base_url = "https://openapi.tapbit.com/"
         self.markets = {}  # not really needed, just a stub
 
     async def fetch_tickers(self, symbols: list[str] | None = None) -> dict[str, dict]:
         if symbols:
             return {}
-        data = await self.fetch_data(self.base_url + 'market/tickers?instType=SPOT')
+        data = await self.fetch_data(self.base_url + 'spot/instruments/ticker_list')
         return self.normalize_data(data)
 
     def _convert_symbol_to_ccxt(self, symbols: str | list[str]) -> str:
         if isinstance(symbols, str):
-            symbols = symbols.replace("-", "/")
             return symbols
         raise TypeError(f"{symbols} invalid type")
 
@@ -38,19 +37,16 @@ class deepcoin:
 
     def normalize_data(self, data: dict) -> dict:
         normalized_data = {}
-        tickers = data.get("data", [])
+        print(data)
+        tickers = data['data']
         print(tickers)
         for row in tickers:
-            symbol = self._convert_symbol_to_ccxt(row.get('instId'))
-            last = float(row.get('last', 0))
-            currency_volume = last * float(row.get('vol24h', 0))
-            contact_volume = float(row.get('volCcy24h', 0))
+            symbol = self._convert_symbol_to_ccxt(row.get('trade_pair_name'))
             normalized_data[symbol] = {
-                "last": last,
+                "last": float(row.get("last_price", 0)),
                 "baseVolume": 0,
-                "quoteVolume": contact_volume + currency_volume
+                "quoteVolume": float(row.get("amount24h", 0))
             }
-
         return normalized_data
 
     async def load_markets(self):

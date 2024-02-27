@@ -101,7 +101,7 @@ active_exchanges = (
     'poloniex',
     'probit',
     'timex',
-    'tokocrypto',
+    # 'tokocrypto', shit
     'upbit',
     'wavesexchange',
     'wazirx',

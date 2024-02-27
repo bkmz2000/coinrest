@@ -12,7 +12,6 @@ class TickerCRUD:
         result = result.mappings()
         return [dict(res) for res in result]
 
-
     async def get_ticker_by_exchange(self, session: AsyncSession, exchange_name: str):
         stmt = (
             select(Exchange.name,
@@ -48,15 +47,26 @@ class TickerCRUD:
         result = result.mappings()
         return [TickerResponse.model_validate(res) for res in result]
 
-
     async def get_top_tickers(self, session: AsyncSession):
+        base_volume = (select(Ticker.base_cg.label("gecko"), func.sum(Ticker.volume_usd).label("volume_usd"))
+                       .group_by(Ticker.base_cg).select_from(Ticker))
+        quote_volume = (select(Ticker.quote_cg.label("gecko"), func.sum(Ticker.volume_usd).label("volume_usd"))
+                        .group_by(Ticker.quote_cg).select_from(Ticker))
+
         stmt = (
-            select(Ticker.base_cg,
-                   func.sum(Ticker.volume_usd).label("volume_usd"),
-                   )
-            .group_by(Ticker.base_cg)
-            .order_by(func.sum(Ticker.volume_usd).desc()).limit(250)
+            base_volume.union_all(quote_volume).subquery()
         )
-        result = await session.execute(stmt)
+        new_stmt = (
+            select
+                (
+                stmt.c.gecko.label("base_cg"),
+                func.sum(stmt.c.volume_usd).label("volume_usd")
+            )
+            .group_by(stmt.c.gecko)
+            .select_from(stmt)
+            .order_by(func.sum(stmt.c.volume_usd).desc())
+            .limit(250)
+        )
+        result = await session.execute(new_stmt)
         result = result.mappings()
         return [dict(res) for res in result]

@@ -3,23 +3,24 @@ from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
 
 
-class tapbit:
+class tidex:
     """
-        docs: https://www.tapbit.com/openapi-docs/spot/public/ticker_list/
+        docs: https://tidex.gitbook.io/api/trading/public/list-of-public-tickers
     """
     def __init__(self):
-        self.id = 'tapbit'
-        self.base_url = "https://openapi.tapbit.com/"
+        self.id = 'tidex'
+        self.base_url = "https://api.tidex.com/api/v1/"
         self.markets = {}  # not really needed, just a stub
 
     async def fetch_tickers(self, symbols: list[str] | None = None) -> dict[str, dict]:
         if symbols:
             return {}
-        data = await self.fetch_data(self.base_url + 'spot/instruments/ticker_list')
+        data = await self.fetch_data(self.base_url + 'public/tickers')
         return self.normalize_data(data)
 
     def _convert_symbol_to_ccxt(self, symbols: str | list[str]) -> str:
         if isinstance(symbols, str):
+            symbols = symbols.replace("_", "/")
             return symbols
         raise TypeError(f"{symbols} invalid type")
 
@@ -37,13 +38,14 @@ class tapbit:
 
     def normalize_data(self, data: dict) -> dict:
         normalized_data = {}
-        tickers = data['data']
-        for row in tickers:
-            symbol = self._convert_symbol_to_ccxt(row.get('trade_pair_name'))
+        tickers = data.get('result', {})
+        for symbol, prop in tickers.items():
+            symbol = self._convert_symbol_to_ccxt(symbol)
+            ticker = prop.get('ticker', {})
             normalized_data[symbol] = {
-                "last": float(row.get("last_price", 0)),
+                "last": float(ticker.get("last", 0)),
                 "baseVolume": 0,
-                "quoteVolume": float(row.get("amount24h", 0))
+                "quoteVolume": float(ticker.get("deal", 0))
             }
         return normalized_data
 

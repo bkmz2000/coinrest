@@ -225,7 +225,7 @@ class Market:
                         symbols.add(symbol)
                 break
             except Exception as e:
-                lg.warning(str(e)[:30])
+                lg.warning(str(e)[:100])
                 await asyncio.sleep(0.5)
 
         if not symbols:

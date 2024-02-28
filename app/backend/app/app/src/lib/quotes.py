@@ -21,6 +21,7 @@ quote_mapper = {
     "USDP": "paxos-standard",
     "XTN": "neutrino",
     "PAX": "paxos-standard",
+    "VNST": "vnst-stablecoin"
 }
 
 active_exchanges = (
@@ -118,9 +119,21 @@ active_exchanges = (
     'orangex',
     'toobit',
     'xtcom',
+
     'tapbit',
     'pionex',
     'bullish',
+
+    'websea',
+    'biconomy',
+    'fastex',
+    'nami_exchange',
+    'coinsbit',
+    'tidex',
+    'btc_alpha',
+    'bilaxy',
+    'difx',
+    'bydfi',
 )
 
 quotes = ['CRO', 'LA', 'TRX', 'HIT', 'TESTUSDT', 'EUTF0', 'BVND', 'USDCBSC', 'BIDR', 'PZM', 'USDT', 'DGLD', 'TWD',

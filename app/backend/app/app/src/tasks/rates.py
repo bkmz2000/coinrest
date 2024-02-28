@@ -34,9 +34,34 @@ async def get_rates_from_fmg() -> list[utils.QuoteRate]:
                     rates.append(rate)
     return rates
 
+async def get_rates_for_VNST() -> utils.QuoteRate:
+    """Вычисляем курс монеты ВНСТ через эфир, потому что это всратая монета и её ни где не найти("""
+    url = "https://nami.exchange/api/v1.0/market/summaries"
+    eth_usd = 0
+    eth_vnst = 1
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp and resp.status == 200:
+                    data = await resp.json()
+                    tickers = data.get('data', [])
+                    for ticker in tickers:
+                        if ticker.get('symbol') == "ETHUSDT":
+                            eth_usd = ticker.get('last_price')
+                        if ticker.get('symbol') == "ETHVNST":
+                            eth_vnst = ticker.get('last_price')
+        vnst_rate = eth_usd/eth_vnst
+    except Exception as e:
+        lg.error(e)
+        vnst_rate = 0
+    rate = utils.QuoteRate(currency='VNST', rate=vnst_rate, update_at=datetime.now())
+    return rate
+
 
 async def main() -> None:
     rates = await get_rates_from_fmg()
+    vnst_rate = await get_rates_for_VNST()
+    rates.append(vnst_rate)
     async with AsyncSessionFactory() as session:
         await update_quote_mapper(session=session, rates=rates)
     lg.info("Currency rates updated")

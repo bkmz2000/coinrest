@@ -8,3 +8,14 @@ from src.exchanges.hotcoinglobal import hotcoinglobal
 from src.exchanges.pionex import pionex
 from src.exchanges.bullish import bullish
 from src.exchanges.tapbit import tapbit
+from src.exchanges.nami_exchnage import nami_exchange
+from src.exchanges.coinsbit import coinsbit
+from src.exchanges.websea import websea
+from src.exchanges.fastex import fastex
+from src.exchanges.tidex import tidex
+from src.exchanges.btc_alpha import btc_alpha
+from src.exchanges.biconomy import biconomy
+from src.exchanges.bilaxy import bilaxy
+from src.exchanges.difx import difx
+from src.exchanges.bydfi import bydfi
+

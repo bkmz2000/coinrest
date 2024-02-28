@@ -1,25 +1,25 @@
 import aiohttp
-from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
 
 
-class tapbit:
+class coinsbit:
     """
-        docs: https://www.tapbit.com/openapi-docs/spot/public/ticker_list/
+        docs: https://coinsbitwsapi.notion.site/API-COINSBIT-WS-API-COINSBIT-cf1044cff30646d49a0bab0e28f27a87
     """
     def __init__(self):
-        self.id = 'tapbit'
-        self.base_url = "https://openapi.tapbit.com/"
+        self.id = 'coinsbit'
+        self.base_url = "https://coinsbit.io/api/v1/"
         self.markets = {}  # not really needed, just a stub
 
     async def fetch_tickers(self, symbols: list[str] | None = None) -> dict[str, dict]:
         if symbols:
             return {}
-        data = await self.fetch_data(self.base_url + 'spot/instruments/ticker_list')
+        data = await self.fetch_data(self.base_url + 'public/tickers')
         return self.normalize_data(data)
 
     def _convert_symbol_to_ccxt(self, symbols: str | list[str]) -> str:
         if isinstance(symbols, str):
+            symbols = symbols.replace("_", "/")
             return symbols
         raise TypeError(f"{symbols} invalid type")
 
@@ -37,18 +37,19 @@ class tapbit:
 
     def normalize_data(self, data: dict) -> dict:
         normalized_data = {}
-        tickers = data['data']
-        for row in tickers:
-            symbol = self._convert_symbol_to_ccxt(row.get('trade_pair_name'))
+        tickers = data.get('result', {})
+        for symbol, prop in tickers.items():
+            ticker = prop['ticker']
+            symbol = self._convert_symbol_to_ccxt(symbol)
             normalized_data[symbol] = {
-                "last": float(row.get("last_price", 0)),
+                "last": float(ticker.get("last", 0)),
                 "baseVolume": 0,
-                "quoteVolume": float(row.get("amount24h", 0))
+                "quoteVolume": float(ticker.get("deal", 0))
             }
         return normalized_data
 
     async def load_markets(self):
-        pass  # stub, not really needed
+        return # stub, not really needed
 
     async def close(self):
-        pass
+        pass  # stub, not really needed

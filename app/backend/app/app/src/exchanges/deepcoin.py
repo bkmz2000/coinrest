@@ -39,7 +39,6 @@ class deepcoin:
     def normalize_data(self, data: dict) -> dict:
         normalized_data = {}
         tickers = data.get("data", [])
-        print(tickers)
         for row in tickers:
             symbol = self._convert_symbol_to_ccxt(row.get('instId'))
             last = float(row.get('last', 0))

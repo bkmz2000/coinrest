@@ -3,24 +3,24 @@ from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
 
 
-class tapbit:
+class fastex:
     """
-        docs: https://www.tapbit.com/openapi-docs/spot/public/ticker_list/
+        docs: https://exchange.fastex.com/api/documentation#tag/public/paths/~1stats~1marketdepth/get
     """
     def __init__(self):
-        self.id = 'tapbit'
-        self.base_url = "https://openapi.tapbit.com/"
-        self.markets = {}  # not really needed, just a stub
+        self.id = 'fastex'
+        self.base_url = "http://exchange.fastex.com/api/v1/"
+        self.markets = {}
 
     async def fetch_tickers(self, symbols: list[str] | None = None) -> dict[str, dict]:
         if symbols:
             return {}
-        data = await self.fetch_data(self.base_url + 'spot/instruments/ticker_list')
+        data = await self.fetch_data(self.base_url + "stats/marketdepthfull")
         return self.normalize_data(data)
 
     def _convert_symbol_to_ccxt(self, symbols: str | list[str]) -> str:
         if isinstance(symbols, str):
-            return symbols
+            return symbols.upper()
         raise TypeError(f"{symbols} invalid type")
 
     def _convert_symbol_from_ccxt(self, symbol: str | list[str]) -> str:
@@ -37,18 +37,18 @@ class tapbit:
 
     def normalize_data(self, data: dict) -> dict:
         normalized_data = {}
-        tickers = data['data']
+        tickers = data.get('response', {}).get('entities', [])
         for row in tickers:
-            symbol = self._convert_symbol_to_ccxt(row.get('trade_pair_name'))
+            symbol = self._convert_symbol_to_ccxt(row.get('pair_name'))
             normalized_data[symbol] = {
-                "last": float(row.get("last_price", 0)),
-                "baseVolume": 0,
-                "quoteVolume": float(row.get("amount24h", 0))
+                "last": float(row.get('last_price', 0)),
+                "baseVolume": float(row.get('vol', 0)),
+                "quoteVolume": 0
             }
         return normalized_data
 
     async def load_markets(self):
-        pass  # stub, not really needed
+        pass
 
     async def close(self):
         pass

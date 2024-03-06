@@ -1,15 +1,13 @@
 import asyncio
 from loguru import logger as lg
-from src.deps.markets import AllMarketsLoader
 from src.deps.markets import Market
 from src.lib.quotes import active_exchanges
 from src.lib.utils import sleeping
 
-quotes = []
-
 
 async def main():
     exchanges = active_exchanges
+    # exchanges = ['bigone']
     await asyncio.gather(*[get_price_and_volume(ex=ex) for ex in exchanges])
 
 
@@ -26,7 +24,6 @@ async def get_price_and_volume(ex: str):
             for symbol, prop in tickers.items():
                 ticker = market.converter.get_normalized_ticker(symbol, prop)
                 if ticker:
-                    # lg.info(ticker)
                     normalized_tickers.append(ticker)
             lg.info(f"{market.exchange_name} normalize {len(normalized_tickers)} tickers")
             await market.save_tickers(normalized_tickers)
@@ -36,7 +33,7 @@ async def get_price_and_volume(ex: str):
 
 async def mmain():
     exchanges = active_exchanges
-    # exchanges = ['orangex']
+    # exchanges = ['bitmake']
     await asyncio.gather(*[get_price_and_volume(ex=ex) for ex in exchanges])
 
 

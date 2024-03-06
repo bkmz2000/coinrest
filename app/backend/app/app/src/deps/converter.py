@@ -3,7 +3,7 @@ from collections import defaultdict
 from sqlalchemy.ext.asyncio import AsyncSession
 from ccxt.async_support.base.exchange import BaseExchange
 from src.db.connection import AsyncSessionFactory
-from src.db.crud import get_exchange_cg_ids, get_converter, set_mapper_data, get_cg_mapper
+from src.db.crud import get_converter, get_cg_mapper
 from src.lib.schema import TickerInfo
 from src.lib.quotes import quote_mapper
 from loguru import logger as lg
@@ -57,9 +57,6 @@ class Converter:
             usd_quote = 0
         return usd_quote
 
-    async def _store_to_db(self, cg_id: str, base: str):
-        mapper = BaseMapper(cg_id=cg_id, exchange=self.exchange.id, symbol=base)
-        await set_mapper_data(session=self.session, mapper=mapper)
 
     def _get_quote_volume_usd(self, usd_quote: float, quote_volume: float) -> float:
         """

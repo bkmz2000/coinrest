@@ -1,8 +1,5 @@
 import os
-
-import ccxt
 import redis.asyncio as redis
-
 from redis.asyncio import Redis
 from fastapi import FastAPI, HTTPException, Depends
 from ccxt.async_support.base.exchange import BaseExchange
@@ -15,11 +12,13 @@ from starlette.middleware.cors import CORSMiddleware
 from src.deps.markets import AllMarketsLoader
 from src.lib.utils import GeckoMarkets, ChartResponse, CoinResponse
 from src.rest import get_coins
-from src.tasks.mapper import get_mapper, update_mapper
+from src.tasks.mapper import get_mapper
 from src.service.logic import fetch_charts
-from src.db.connection import get_db, AsyncSessionFactory
-from src.worker import update_last_price, update_mapper_task
+from src.db.connection import get_db, AsyncSessionFactory, engine
+from src.worker import update_last_price, old_update_mapper_task
 from src.api.routers import api_router
+from sqladmin import Admin
+from src.admin import views
 
 r: Redis = None
 ex_markets: list[BaseExchange] = []
@@ -55,6 +54,9 @@ app.add_middleware(
 )
 app.include_router(api_router)
 
+admin = Admin(app, engine)
+admin.add_view(views.ExchangesAdmin)
+admin.add_view(views.TickerAdmin)
 
 
 @app.get("/ping/{val}")
@@ -81,11 +83,11 @@ async def coins(session: AsyncSession = Depends(get_db)):
     return await get_coins(session=session)
 
 
-
 @app.get("/update")
 async def update(session: AsyncSession = Depends(get_db)):
     """
         Update mapper
     """
-    update_mapper_task.apply_async()
+    old_update_mapper_task.apply_async()
     return {"message": "Mapper updating..."}
+

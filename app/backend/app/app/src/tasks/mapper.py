@@ -9,6 +9,7 @@ from src.lib.client import fetch_data_from_hodler
 from src.lib.utils import GeckoMarkets
 from src.lib.schema import TickerToMatch, TickerMatched
 from src.db import crud
+from src.db.cruds import crud_exchange
 
 
 async def get_mapper(exchanges: list[BaseExchange], session: AsyncSession) -> dict[str, list[GeckoMarkets]]:
@@ -17,22 +18,12 @@ async def get_mapper(exchanges: list[BaseExchange], session: AsyncSession) -> di
     mapper = defaultdict(list)
     for market in data:
         for exchange in exchanges:
-            if exchange.id == market.exchange:
+            if exchange.id == market.ccxt_name:
                 mapper[market.cg_id].append(GeckoMarkets(symbol=market.symbol, exchange=exchange))
                 break
     # for k, v in mapper.items():
     #     lg.info(f"{k}: mapped {len(v)} exchanges")
     return mapper
-
-
-async def get_cg_ids(session: AsyncSession, exchange_id: str):
-    ids = {}
-    cg_ids = await crud.get_exchange_cg_ids(session=session, exchange_id=exchange_id)
-    for market in cg_ids:
-        base = market['symbol'].split("/")[0]
-        ids[base] = market['cg_id']
-    lg.debug(f"{exchange_id} coingecko_ids: {ids}")
-    return ids
 
 
 async def update_mapper():
@@ -42,16 +33,19 @@ async def update_mapper():
     """
     lg.info("Updating mapper")
     coins = await fetch_data_from_hodler()
+    # coins = []
     matched = []
+    ex = crud_exchange.ExchangeCRUD()
     async with AsyncSessionFactory() as session:
         db_tickers = await crud.get_db_tickers(session=session)
         for ticker in db_tickers:
+            lg.debug(ticker)
             matched_ticker = match(coins, ticker)
             if matched_ticker:
-                matched.append(matched_ticker)
+                await ex.save_mappings(session=session,
+                                       exchange_id=matched_ticker.exchange_id,
+                                       mapped={matched_ticker.symbol: matched_ticker.base_cg})
         lg.info(f"Matched tickers: {len(matched)}/{len(db_tickers)}")
-        await crud.save_matched_tickers(session=session, tickers=matched)
-
 
 def match(coins: list, ticker: TickerToMatch) -> TickerMatched | None:
     """
@@ -63,7 +57,7 @@ def match(coins: list, ticker: TickerToMatch) -> TickerMatched | None:
     for coin in coins:
         if coin["symbol"] == ticker.base:
             if 0.85 <= coin["quote"]["USD"]["price"] / ticker.price_usd <= 1.15:
-                return TickerMatched(id=ticker.id, base_cg=coin["cgid"])
+                return TickerMatched(exchange_id=ticker.exchange_id, base_cg=coin["cgid"], symbol=ticker.base)
 
 
 async def main():

@@ -134,6 +134,9 @@ active_exchanges = (
     'bilaxy',
     'difx',
     'bydfi',
+
+    'bitmake',
+
 )
 
 quotes = ['CRO', 'LA', 'TRX', 'HIT', 'TESTUSDT', 'EUTF0', 'BVND', 'USDCBSC', 'BIDR', 'PZM', 'USDT', 'DGLD', 'TWD',

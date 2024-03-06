@@ -18,4 +18,5 @@ from src.exchanges.biconomy import biconomy
 from src.exchanges.bilaxy import bilaxy
 from src.exchanges.difx import difx
 from src.exchanges.bydfi import bydfi
+from src.exchanges.bitmake import bitmake
 

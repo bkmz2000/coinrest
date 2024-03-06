@@ -14,4 +14,4 @@ async def get_exchange(session: AsyncSession = Depends(connection.get_db)):
         Get exchange list
     """
     ex = ExchangeCRUD()
-    return await ex.get_exchanges(session=session)
+    return await ex.get_exchange_names(session=session)

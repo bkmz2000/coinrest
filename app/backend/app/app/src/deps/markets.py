@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from typing import Literal
 
 import ccxt.async_support as ccxt
@@ -8,7 +9,8 @@ from loguru import logger as lg
 
 from src.db.connection import AsyncSessionFactory
 from src.deps.converter import Converter
-from src.lib.schema import TickerInfo
+from src.lib.schema import TickerInfo, UpdateEventTo
+from src.strapi_sync.strapi import update_strapi_state
 from src.db import crud
 
 
@@ -69,6 +71,10 @@ class AllMarketsLoader:
         if self.target == "ohlcv":
             for exchange in self.exchanges:
                 if exchange.has["fetchOHLCV"]:
+                    if exchange.id == 'alpaca':
+                        continue
+                    elif exchange.id == 'bitforex':
+                        continue
                     target_exchanges.append(exchange)
 
         elif self.target == "volume":
@@ -290,5 +296,8 @@ class Market:
             self.exchange.fetch_timeout = 0.3
 
     async def save_tickers(self, tickers: list[TickerInfo]) -> None:
-        async with AsyncSessionFactory() as session:
-            await crud.save_tickers(session=session, tickers=tickers)
+        if tickers:
+            async with AsyncSessionFactory() as session:
+                await crud.save_tickers(session=session, tickers=tickers)
+            event = UpdateEventTo(ticker_num=len(tickers), last_update=str(datetime.now()))
+            await update_strapi_state(self.exchange.id, event)

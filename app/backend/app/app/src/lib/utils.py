@@ -18,14 +18,8 @@ class BaseMapper(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     cg_id: str
-    exchange: str
+    ccxt_name: str
     symbol: str
-
-
-class Mapper(BaseMapper):
-    id: int
-    update: datetime.datetime
-
 
 class ChartResponse(BaseModel):
     prices: list[tuple[int, float]]
@@ -38,11 +32,6 @@ class BaseLastVolume(BaseModel):
     cg_id: str | None
     volume: float | None
     price: float | None
-
-
-class LastVolume(BaseLastVolume):
-    id: int
-    update: datetime.datetime
 
 
 @dataclass
@@ -63,8 +52,6 @@ class QuoteRate(BaseModel):
     currency: str
     rate: float
     update_at: datetime.datetime | None = None
-
-
 
 
 def sleeping(func):

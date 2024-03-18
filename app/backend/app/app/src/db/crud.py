@@ -1,36 +1,23 @@
 import asyncio
 import datetime
 import time
-from dataclasses import asdict
 
-import requests
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text, update, null
 from sqlalchemy.dialects.postgresql import insert
 from loguru import logger as lg
 
-from src.db.connection import AsyncSessionFactory
-from src.db.models import ExchangeMapper, QuoteMapper, Ticker, Exchange
+from src.db.models import ExchangeMapper, QuoteMapper, Ticker, Exchange, LastValues
 from src.lib import utils
-from src.lib.schema import TickerInfo, TickerMatched, TickerToMatch
-from src.lib.utils import Coin
-
-
-async def get_mapper_data(session: AsyncSession):
-    stmt = (select(ExchangeMapper.cg_id, ExchangeMapper.symbol, Exchange.ccxt_name)
-            .join(Exchange, Exchange.id == ExchangeMapper.exchange_id)
-            .where(Exchange.id == ExchangeMapper.exchange_id))
-    result = await session.execute(stmt)
-    result = result.mappings()
-    result = [utils.BaseMapper.model_validate(res) for res in result]
-    return result
+from src.lib import schema
 
 
 async def get_cg_mapper(session: AsyncSession, exchange_id: str) -> dict[str, str]:
     stmt = (select(ExchangeMapper.cg_id, ExchangeMapper.symbol, Exchange.ccxt_name)
             .join(Exchange, Exchange.id == ExchangeMapper.exchange_id)
             .where(Exchange.id == ExchangeMapper.exchange_id)
-            .having(Exchange.ccxt_name == exchange_id).group_by(ExchangeMapper.cg_id, ExchangeMapper.symbol, Exchange.ccxt_name)
+            .having(Exchange.ccxt_name == exchange_id).group_by(ExchangeMapper.cg_id, ExchangeMapper.symbol,
+                                                                Exchange.ccxt_name)
             )
     result = await session.execute(stmt)
     result = result.mappings()
@@ -38,44 +25,6 @@ async def get_cg_mapper(session: AsyncSession, exchange_id: str) -> dict[str, st
         utils.BaseMapper.model_validate(res).symbol:
             utils.BaseMapper.model_validate(res).cg_id for res in result
     }
-    return result
-
-
-async def get_coins_from_db(session: AsyncSession):
-    stmt = text("""
-        SELECT gecko as cg_id, sum(volume_usd) as volume, max(price) as price FROM (
-                SELECT 
-                        q.base_cg as gecko,
-                        sum(q.volume_usd) as volume_usd,
-                        (SELECT max(price_usd) FROM  
-                            (SELECT price_usd, volume_usd FROM ticker WHERE base_cg = q.base_cg) as q1 
-                            WHERE q1.volume_usd = (
-                                SELECT max(volume_usd) 
-                                FROM ticker 
-                                WHERE base_cg = q.base_cg 
-                                AND last_update >= :stamp)
-                        ) as price
-                FROM ticker q
-                WHERE last_update >= :stamp
-                GROUP BY q.base_cg
-            UNION ALL 
-                SELECT 
-                    q.quote_cg as gecko,
-                    sum(q.volume_usd) as volume_usd,
-                    0 as price
-                FROM ticker q
-                WHERE q.base_cg IS NOT NULL
-                AND last_update >= :stamp
-                GROUP BY q.quote_cg
-            ) total
-            GROUP BY gecko
-            ORDER BY sum(volume_usd) DESC;
-                """)
-    unix_stamp_now = int(time.time()) - 10800  # 3 hours
-    result = await session.execute(stmt, params=[{"stamp": unix_stamp_now}])
-    result = result.mappings()
-    result = [utils.BaseLastVolume.model_validate(res) for res in result]
-
     return result
 
 
@@ -103,7 +52,8 @@ async def get_converter(session: AsyncSession) -> dict[str, float]:
     }
     return result
 
-async def save_tickers(session: AsyncSession, tickers: list[TickerInfo]):
+
+async def save_tickers(session: AsyncSession, tickers: list[schema.TickerInfo]):
     if not tickers:
         return
     exchange_name = tickers[0].exchange_id
@@ -143,38 +93,78 @@ async def save_tickers(session: AsyncSession, tickers: list[TickerInfo]):
     await session.commit()
 
 
-async def get_db_tickers(session: AsyncSession) -> list[TickerToMatch]:
+async def get_db_tickers(session: AsyncSession) -> list[schema.TickerToMatch]:
     stmt = (select(Ticker.id, Ticker.exchange_id, Ticker.base, Ticker.price_usd).
             where(Ticker.price_usd > 0).
             where(Ticker.base_cg.is_(null()))
             )
     result = await session.execute(stmt)
     result = result.mappings()
-    result = [TickerToMatch.model_validate(res) for res in result]
+    result = [schema.TickerToMatch.model_validate(res) for res in result]
     return result
 
 
-async def save_matched_tickers(session: AsyncSession, tickers: list[TickerMatched]):
+async def save_matched_tickers(session: AsyncSession, tickers: list[schema.TickerMatched]):
     ticker_list = [ticker.model_dump() for ticker in tickers]
     await session.execute(update(Ticker), ticker_list)
     await session.commit()
 
 
+async def get_all_tickers(session: AsyncSession) -> list[schema.TickerSimple]:
+    unix_stamp_now = int(time.time()) - 10800  # 3 hours
+    stmt = (
+        select(Ticker.base_cg, Ticker.price_usd, Ticker.volume_usd)
+        .where(Ticker.base_cg.is_not(null()))
+        .where(Ticker.price_usd > 0)
+        .where(Ticker.volume_usd > 0)
+        .where(Ticker.last_update > unix_stamp_now)
+        .order_by(Ticker.volume_usd.desc())
+    )
+    result = await session.execute(stmt)
+    result = result.mappings()
+    result = [schema.TickerSimple.model_validate(res) for res in result]
+    return result
+
+
+async def save_last(session: AsyncSession, coins: list[schema.CoinOutput]):
+    values = [coin.model_dump() for coin in coins]
+    stmt = insert(LastValues).values(values)
+    update_stmt = stmt.on_conflict_do_update(
+        index_elements=[LastValues.cg_id],
+        set_=dict(
+            price_usd=stmt.excluded.price_usd,
+            volume_usd=stmt.excluded.volume_usd,
+            price_btc=stmt.excluded.price_btc,
+            volume_btc=stmt.excluded.volume_btc,
+            last_update=datetime.datetime.now()
+        )
+    )
+    await session.execute(update_stmt)
+    await session.commit()
+
+
+async def get_coins_from_db(session: AsyncSession):
+    delta = datetime.datetime.now() - datetime.timedelta(hours=1)
+    stmt = (select(LastValues.cg_id,
+                   LastValues.price_usd,
+                   LastValues.volume_usd,
+                   LastValues.price_btc,
+                   LastValues.volume_btc)
+            .where(LastValues.last_update > delta)
+            .order_by(LastValues.volume_usd.desc())
+            )
+    result = await session.execute(stmt)
+    result = result.mappings()
+    result = [utils.Last.model_validate(res) for res in result]
+    return result
+
 
 async def main():
     ...
-    # from src.lib.quotes import active_exchanges
-
     # async with AsyncSessionFactory() as session:
-    # tickers = [TickerMatched(id=6313, base_cg="BTC")]
-    # await save_matched_tickers(session, tickers)
-    # result = await get_coins_from_db(session=session)
-    # l = [TickerInfo(exchange_id='hotcoinglobal', base='ARB', base_cg=None, quote='USDT', quote_cg=None, price=1.839, price_usd=1.8392390699999999, base_volume=3977992.3, quote_volume=0, volume_usd=7316478.8583191605),
-    #      TickerInfo(exchange_id='hotcoinglobal', base='BTM', base_cg=None, quote='USDT', quote_cg=None, price=0.010077, price_usd=0.01007831001, base_volume=27628613.855, quote_volume=0, volume_usd=278449.7355772712)
-    #      ]
-    # await save_tickers(session=session, tickers=l)
-    # result = await get_converter(session=session)
-    # lg.debug(result)
+    #     tickers = await get_coins_from_db(session=session)
+    #     for ticker in tickers:
+    #         print(ticker)
 
 
 if __name__ == "__main__":

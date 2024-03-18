@@ -1,5 +1,7 @@
 import datetime
 from dataclasses import dataclass
+
+from numpy import array
 from pydantic import BaseModel, ConfigDict
 
 @dataclass
@@ -13,6 +15,22 @@ class TickerInfo:
     price_usd: float
     base_volume: float
     quote_volume: float
+    volume_usd: float
+
+class CoinInput:
+    price: array = array([])
+    volume: array = array([])
+
+class CoinOutput(BaseModel):
+    cg_id: str
+    price_usd: float
+    volume_usd: float
+    price_btc: float | None
+    volume_btc: float | None
+
+class TickerSimple(BaseModel):
+    base_cg: str
+    price_usd: float
     volume_usd: float
 
 

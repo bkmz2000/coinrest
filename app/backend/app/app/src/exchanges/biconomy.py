@@ -17,7 +17,7 @@ class biconomy:
         data = await self.fetch_data(self.base_url + 'api/v1/tickers')
         return self.normalize_data(data)
 
-    def _convert_symbol_to_ccxt(self, symbols: str | list[str]) -> str:
+    def _convert_symbol_to_ccxt(self, symbols: str) -> str:
         if isinstance(symbols, str):
             symbols = symbols.replace("_", "/")
             return symbols

@@ -26,12 +26,15 @@ class ChartResponse(BaseModel):
     exchange: str
 
 
-class BaseLastVolume(BaseModel):
+class Last(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     cg_id: str | None
-    volume: float | None
-    price: float | None
+    price_usd: float | None
+    volume_usd: float | None
+
+    price_btc: float | None
+    volume_btc: float | None
 
 
 @dataclass
@@ -44,6 +47,9 @@ class Coin:
 class CoinResponse(BaseModel):
     usd: float | None
     usd_24h_vol: float | None
+
+    btc: float | None
+    btc_24h_vol: float | None
 
 
 class QuoteRate(BaseModel):

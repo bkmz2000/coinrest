@@ -71,3 +71,17 @@ class ExchangeMapper(Base):
     updated_at: Mapped[datetime.datetime]
 
     __table_args__ = (UniqueConstraint("exchange_id", "symbol", name="exchange_symbol_unique"),)
+
+
+class LastValues(Base):
+    __tablename__ = 'last'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    cg_id: Mapped[str] = mapped_column(unique=True)
+    price_usd: Mapped[float]
+    price_btc: Mapped[float]
+    volume_usd: Mapped[float]
+    volume_btc: Mapped[float]
+    last_update: Mapped[datetime.datetime]
+
+    __table_args__ = (UniqueConstraint("cg_id", name="cg_id_unique"),)

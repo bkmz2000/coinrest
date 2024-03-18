@@ -1,29 +1,11 @@
 from asyncio import run
 from loguru import logger as lg
-from ccxt.async_support.base.exchange import BaseExchange
-from collections import defaultdict
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.connection import AsyncSessionFactory
 from src.lib.client import fetch_data_from_hodler
-from src.lib.utils import GeckoMarkets
 from src.lib.schema import TickerToMatch, TickerMatched
 from src.db import crud
 from src.db.cruds import crud_exchange
-
-
-async def get_mapper(exchanges: list[BaseExchange], session: AsyncSession) -> dict[str, list[GeckoMarkets]]:
-    lg.info(f"Loading mapper from database")
-    data = await crud.get_mapper_data(session=session)
-    mapper = defaultdict(list)
-    for market in data:
-        for exchange in exchanges:
-            if exchange.id == market.ccxt_name:
-                mapper[market.cg_id].append(GeckoMarkets(symbol=market.symbol, exchange=exchange))
-                break
-    # for k, v in mapper.items():
-    #     lg.info(f"{k}: mapped {len(v)} exchanges")
-    return mapper
 
 
 async def update_mapper():

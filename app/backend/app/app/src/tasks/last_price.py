@@ -7,7 +7,7 @@ from src.lib.utils import sleeping
 
 async def main():
     exchanges = active_exchanges
-    # exchanges = ['bigone']
+    # exchanges = ['onetrading']
     await asyncio.gather(*[get_price_and_volume(ex=ex) for ex in exchanges])
 
 
@@ -31,11 +31,5 @@ async def get_price_and_volume(ex: str):
         lg.error(e)
 
 
-async def mmain():
-    exchanges = active_exchanges
-    # exchanges = ['bitmake']
-    await asyncio.gather(*[get_price_and_volume(ex=ex) for ex in exchanges])
-
-
 if __name__ == "__main__":
-    asyncio.run(mmain())
+    asyncio.run(main())

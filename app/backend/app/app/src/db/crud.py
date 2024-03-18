@@ -7,6 +7,7 @@ from sqlalchemy import select, func, text, update, null
 from sqlalchemy.dialects.postgresql import insert
 from loguru import logger as lg
 
+from src.db.connection import AsyncSessionFactory
 from src.db.models import ExchangeMapper, QuoteMapper, Ticker, Exchange, LastValues
 from src.lib import utils
 from src.lib import schema
@@ -161,11 +162,6 @@ async def get_coins_from_db(session: AsyncSession):
 
 async def main():
     ...
-    # async with AsyncSessionFactory() as session:
-    #     tickers = await get_coins_from_db(session=session)
-    #     for ticker in tickers:
-    #         print(ticker)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

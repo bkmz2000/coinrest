@@ -25,7 +25,6 @@ class Exchange(Base):
     cg_identifier: Mapped[str]
     full_name: Mapped[str]
     trust_score: Mapped[int]
-    logo: Mapped[str]
     centralized: Mapped[bool]
 
     ticker: Mapped[List["Ticker"]] = relationship(back_populates="exchange", cascade="all, delete",

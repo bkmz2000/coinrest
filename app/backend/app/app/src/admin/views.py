@@ -6,7 +6,7 @@ from loguru import logger as lg
 
 
 class ExchangesAdmin(ModelView, model=Exchange):
-    column_list = [Exchange.ccxt_name, Exchange.full_name, Exchange.logo, Exchange.trust_score, Exchange.centralized]
+    column_list = [Exchange.ccxt_name, Exchange.full_name, Exchange.trust_score, Exchange.centralized]
     column_details_list = "__all__"
 
     column_searchable_list = [Exchange.ccxt_name]

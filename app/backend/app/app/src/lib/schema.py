@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass
+from typing import Literal
 
 from numpy import array
 from pydantic import BaseModel, ConfigDict
@@ -74,7 +75,6 @@ class ExchangeResponse(BaseModel):
 class Market(BaseModel):
     name: str
     identifier: str | None
-    logo: str
     trust_score: int | None
     centralized: bool
 
@@ -96,6 +96,21 @@ class UpdateEventFrom(BaseModel):
 class UpdateEventTo(BaseModel):
     ticker_num: int
     last_update: str
+
+
+class CoinResponse(BaseModel):
+    id: int
+    exchange: str
+    pair: str
+    price: float
+    volume_24h: float
+    exchange_type: Literal['ALL', 'CEX', 'DEX']
+    trading_type: Literal['Spot', 'Perpetual', 'Futures']
+
+
+class MarketResponse(BaseModel):
+    coins: list[CoinResponse]
+    total: int
 
 # {
 #   "event": "entry.update",

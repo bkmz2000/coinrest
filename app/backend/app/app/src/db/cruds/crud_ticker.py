@@ -1,10 +1,11 @@
 import time
 
+import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 
 from src.db.models import Ticker, Exchange
-from src.lib.schema import TickerResponse
+from src.lib.schema import TickerResponse, MarketResponse
 
 
 class TickerCRUD:
@@ -76,3 +77,97 @@ class TickerCRUD:
         result = await session.execute(new_stmt)
         result = result.mappings()
         return [dict(res) for res in result]
+
+    async def exchanges_by_cg_id(self,
+                                 cg_id: str,
+                                 limit: int,
+                                 offset: int,
+                                 currency: str,
+                                 exchange_type: str,
+                                 trading_type: str,
+                                 id_sort: str,
+                                 exchange_sort,
+                                 pair_sort,
+                                 price_sort,
+                                 volume_sort,
+                                 session: AsyncSession):
+        stmt = (select(Exchange.id,
+                       Exchange.full_name,
+                       Ticker.base,
+                       Ticker.quote,
+                       Ticker.price_usd,
+                       Ticker.volume_usd,
+                       Exchange.centralized)
+                .join(Exchange, Exchange.id == Ticker.exchange_id)
+                .where(Ticker.base_cg == cg_id)
+                .where(Ticker.price_usd > 0)
+                .where(Ticker.volume_usd > 0)
+                )
+        func.count(stmt)
+        if currency != "All":
+            stmt = stmt.filter(Ticker.quote == currency)
+
+        if exchange_type != "All":
+            if exchange_type == "CEX":
+                stmt = stmt.filter(Exchange.centralized == True)
+            elif exchange_type == "DEX":
+                stmt = stmt.filter(Exchange.centralized == False)
+
+        stmt = self.trading_type_filter(stmt, trading_type)
+        stmt = self.ex_id_order(stmt, id_sort)
+        stmt = self.ex_exchange_order(stmt, exchange_sort)
+        stmt = self.t_pair_order(stmt, pair_sort)
+        stmt = self.t_price_order(stmt, price_sort)
+        stmt = self.t_volume_order(stmt, volume_sort)
+
+        count_all = select(func.count(stmt.c.id)).select_from(stmt)
+        count = await session.execute(count_all)
+        count = count.scalar()
+
+        stmt = stmt.limit(limit).offset(offset)
+        result = await session.execute(stmt)
+        result = result.mappings()
+
+        return [dict(res) for res in result], count
+
+    def trading_type_filter(self, stmt: select, trading_type: str):
+        if trading_type == "Spot":
+            return stmt
+            # return stmt.filter(Ticker.trading_type == trading_type)
+        else:
+            return stmt.filter(sqlalchemy.false())
+
+    def ex_id_order(self, stmt: select, id_sort: str):
+        if id_sort == "ASC":
+            return stmt.order_by(Exchange.id)
+        elif id_sort == "DESC":
+            return stmt.order_by(Exchange.id.desc())
+        return stmt
+
+    def ex_exchange_order(self, stmt: select, exchange_sort: str):
+        if exchange_sort == "ASC":
+            return stmt.order_by(Exchange.full_name)
+        elif exchange_sort == "DESC":
+            return stmt.order_by(Exchange.full_name.desc())
+        return stmt
+
+    def t_pair_order(self, stmt: select, pair_sort: str):
+        if pair_sort == "ASC":
+            return stmt.order_by(Ticker.quote)
+        elif pair_sort == "DESC":
+            return stmt.order_by(Ticker.quote.desc())
+        return stmt
+
+    def t_price_order(self, stmt: select, price_sort: str):
+        if price_sort == "ASC":
+            return stmt.order_by(Ticker.price_usd)
+        elif price_sort == "DESC":
+            return stmt.order_by(Ticker.price_usd.desc())
+        return stmt
+
+    def t_volume_order(self, stmt: select, volume_sort: str):
+        if volume_sort == "ASC":
+            return stmt.order_by(Ticker.volume_usd)
+        elif volume_sort == "DESC":
+            return stmt.order_by(Ticker.volume_usd.desc())
+        return stmt

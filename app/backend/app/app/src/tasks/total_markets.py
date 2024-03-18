@@ -24,6 +24,8 @@ async def main():
             btc_coin = calculate_bitcoin_values('bitcoin', coins['bitcoin'])
 
             for cg_id, arrays in coins.items():
+                if cg_id == 'bitcoin':
+                    continue
                 # calculate z-score for every price
                 z = np.abs(stats.zscore(arrays.price))
                 # delete all outliers from prices and volumes arrays

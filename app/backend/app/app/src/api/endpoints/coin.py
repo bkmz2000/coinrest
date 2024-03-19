@@ -40,6 +40,7 @@ async def get_ticker_exchanges(cg_id: str,
                                                  volume_sort=volume_sort,
                                                  session=session)
     result = []
+    quotes = set()
     for coin in coins:
         result.append(CoinResponse(
             id=coin['id'],
@@ -50,7 +51,9 @@ async def get_ticker_exchanges(cg_id: str,
             exchange_type="CEX" if coin['centralized'] else "DEX",
             trading_type="Spot"
         ))
+        quotes.add(coin['quote'])
     return MarketResponse(
         coins=result,
-        total=total
+        total=total,
+        quotes=tuple(quotes)
     )

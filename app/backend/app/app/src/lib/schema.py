@@ -111,6 +111,7 @@ class CoinResponse(BaseModel):
 class MarketResponse(BaseModel):
     coins: list[CoinResponse]
     total: int
+    quotes: list[str]
 
 # {
 #   "event": "entry.update",

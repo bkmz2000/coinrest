@@ -23,6 +23,14 @@ async def main():
 
             btc_coin = calculate_bitcoin_values('bitcoin', coins['bitcoin'])
 
+            result.append(CoinOutput(
+                cg_id=btc_coin.cg_id,
+                price_usd=btc_coin.price_usd,
+                price_btc=btc_coin.price_btc,
+                volume_usd=btc_coin.volume_usd,
+                volume_btc=btc_coin.volume_btc
+            ))
+
             for cg_id, arrays in coins.items():
                 if cg_id == 'bitcoin':
                     continue

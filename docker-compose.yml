@@ -1,13 +1,23 @@
 version: "3.3"
 services:
 
+  frontend:
+    build:
+      context: ./app/frontend/exchange
+      dockerfile: Dockerfile
+    volumes:
+      - './app/frontend/exchange:/app'
+      - '/app/node_modules'
+    ports:
+      - 8070:8070
+
   backend:
     build:
-      context: ./app
+      context: ./app/backend/app
       dockerfile: Dockerfile
     restart: unless-stopped
     volumes:
-      - ./app/app/:/app
+       - ./app/backend/app/app:/app
     env_file:
       - .env
     ports:
@@ -16,7 +26,7 @@ services:
 
   redis:
     build:
-      context: redis
+      context: ./app/redis
       dockerfile: Dockerfile
     hostname: redis
     ports:
@@ -30,7 +40,7 @@ services:
 
   celery_worker:
     build:
-      context: ./app
+      context: ./app/backend/app
       dockerfile: ./Dockerfile
     command: celery -A src.worker worker --loglevel=INFO
     env_file:
@@ -42,7 +52,7 @@ services:
 
   celery_beat:
     build:
-      context: ./app
+      context: ./app/backend/app
       dockerfile: Dockerfile
     command: celery -A src.worker beat --loglevel=INFO
     env_file:
@@ -52,7 +62,8 @@ services:
   db:
     image: postgres:15.1-alpine
     volumes:
-      - ./init:/docker-entrypoint-initdb.d:ro
+      - ./app/init:/docker-entrypoint-initdb.d:ro
+      - ./app/init/postgresCustom.conf:/var/lib/postgresql/data/postgresql.conf
       - postgres_data:/var/lib/postgresql/data/
     ports:
       - "6543:5432"

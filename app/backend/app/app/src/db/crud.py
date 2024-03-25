@@ -29,6 +29,19 @@ async def get_cg_mapper(session: AsyncSession, exchange_id: str) -> dict[str, st
     return result
 
 
+async def get_exchange_mapper(session: AsyncSession, exchange_ids: list[str]) -> list[utils.BaseMapper]:
+    stmt = (select(ExchangeMapper.cg_id, ExchangeMapper.symbol, Exchange.ccxt_name)
+            .join(Exchange, Exchange.id == ExchangeMapper.exchange_id)
+            .where(Exchange.id == ExchangeMapper.exchange_id)
+            .having(Exchange.ccxt_name.in_(exchange_ids)).group_by(ExchangeMapper.cg_id, ExchangeMapper.symbol,
+                                                                   Exchange.ccxt_name)
+            )
+    result = await session.execute(stmt)
+    result = result.mappings()
+    result = [utils.BaseMapper.model_validate(res) for res in result]
+    return result
+
+
 async def update_quote_mapper(session: AsyncSession, rates: list[utils.QuoteRate]):
     rates_list = [dict(currency=rate.currency, rate=rate.rate, update_at=rate.update_at) for rate in rates]
     stmt = insert(QuoteMapper).values(rates_list)

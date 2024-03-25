@@ -8,7 +8,7 @@ from src.lib.schema import UpdateEventTo
 
 # base_url = os.environ.get("STRAPI_URL", 'http://0.0.0.0:1337')
 base_url = os.environ.get("STRAPI_URL", 'http://192.168.0.103:1337')
-token = os.environ.get("STRAPI_TOKEN", "540acb76af152ecc4990b2021a14bc4ac2d0c7f0217c8f7f259574cce3e5c25b794a837f0e3ccaa5103e97a2afcd1b0cf7a32efbd836895311ba0df98719d232c47c422aa9143482c1423925610e970b1b8de3a6ba68b39a85efa392c05476aba9f0219ebf7f7ebbf02d8d48b4100c907df3f91d1da5e4677e7acf31285bb093")
+token = os.environ.get("STRAPI_TOKEN")
 
 headers = {"Authorization": f"bearer {token}", "Content-Type": "application/json"}
 

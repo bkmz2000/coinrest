@@ -113,6 +113,18 @@ class MarketResponse(BaseModel):
     total: int
     quotes: list[str]
 
+
+class HistoricalRequest(BaseModel):
+    cg_id: str
+    timeframe: Literal['5m', '1h', '1d']
+    stamps: list[int]
+
+
+class HistoricalResponse(BaseModel):
+    cg_id: str
+    stamp: int
+    price: float
+
 # {
 #   "event": "entry.update",
 #   "createdAt": "2020-01-10T08:58:26.563Z",

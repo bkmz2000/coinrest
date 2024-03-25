@@ -7,11 +7,11 @@ import datetime
 from pydantic import BaseModel, ConfigDict
 from loguru import logger as lg
 
-
 @dataclass
-class GeckoMarkets:
-    symbol: str
+class Match:
+    cg_id: str
     exchange: BaseExchange
+    symbol: str
 
 
 class BaseMapper(BaseModel):
@@ -20,10 +20,6 @@ class BaseMapper(BaseModel):
     cg_id: str
     ccxt_name: str
     symbol: str
-
-class ChartResponse(BaseModel):
-    prices: list[tuple[int, float]]
-    exchange: str
 
 
 class Last(BaseModel):

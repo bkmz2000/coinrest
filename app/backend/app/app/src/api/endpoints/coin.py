@@ -14,7 +14,7 @@ router = APIRouter()
 async def get_ticker_exchanges(cg_id: str,
                                limit: int = Query(100),
                                offset: int = Query(0),
-                               currency: Literal['All', 'USDT', 'BTC'] = Query('All'),
+                               currency: str = Query('All', description="Use 'All' for all currencies or ex.: 'BTC', 'USDT' "),
                                exchange_type: Literal['All', 'CEX', 'DEX'] = Query('All'),
                                trading_type: Literal['Spot', 'Perpetual', 'Futures'] = Query('Spot'),
                                id_sort: Literal['NO', 'ASC', 'DESC'] = Query('NO'),

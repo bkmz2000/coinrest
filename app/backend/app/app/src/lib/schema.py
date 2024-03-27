@@ -72,11 +72,10 @@ class ExchangeResponse(BaseModel):
     cg_identifier: str
 
 
-class Market(BaseModel):
+class StrapiMarket(BaseModel):
     name: str
-    identifier: str | None
     trust_score: int | None
-    centralized: bool
+    logo: str | None
 
 
 class MarketMapping(BaseModel):
@@ -101,6 +100,7 @@ class UpdateEventTo(BaseModel):
 class CoinResponse(BaseModel):
     id: int
     exchange: str
+    logo: str | None
     pair: str
     price: float
     volume_24h: float

@@ -45,6 +45,7 @@ async def get_ticker_exchanges(cg_id: str,
         result.append(CoinResponse(
             id=coin['id'],
             exchange=coin['full_name'],
+            logo=coin['logo'],
             pair=coin['base'] + '/' + coin['quote'],
             price=coin['price_usd'],
             volume_24h=coin['volume_usd'],

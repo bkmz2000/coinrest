@@ -29,7 +29,7 @@ markets: HistoricalMarkets = None
 
 async def get_markets():
     global markets
-    markets = HistoricalMarkets(exchange_names=['binance'])
+    markets = HistoricalMarkets()
     async with AsyncSessionFactory() as session:
         await markets.load_markets(session=session)
 

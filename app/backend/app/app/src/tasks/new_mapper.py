@@ -1,13 +1,11 @@
 import asyncio
-import time
+import aiohttp
 
 from loguru import logger as lg
 from src.db.connection import AsyncSessionFactory
 from src.db.cruds.crud_exchange import ExchangeCRUD
-from src.lib.schema import Market
 
 
-import aiohttp
 
 async def main():
     lg.info("New mapper started")
@@ -25,29 +23,6 @@ async def main():
             except Exception as e:
                 lg.error(f"{exchange} {e}")
     lg.info("New mapper updated")
-
-async def get_exchange_data(exchange: str, mapped) -> Market | None:
-    """
-        Get exchange details, and top 100 ticker mappings
-    """
-    url = f"https://api.coingecko.com/api/v3/exchanges/{exchange}"
-    data = await _fetch_data(url)
-    tickers = data.get('tickers')
-    if not tickers:
-        return
-    identifier = tickers[0].get('market', {}).get('identifier')
-    if not identifier:
-        return
-
-    market = Market(name=data.get('name'),
-                    identifier=identifier,
-                    logo=data.get('image'),
-                    trust_score=data.get('trust_score'),
-                    centralized=data.get('centralized')
-                    )
-    _parse_tickers(tickers, mapped)
-    return market
-
 
 
 async def get_exchange_tickers(exchange: str, mapped: dict):

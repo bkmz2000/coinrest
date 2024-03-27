@@ -93,6 +93,7 @@ class TickerCRUD:
                                  session: AsyncSession):
         stmt = (select(Exchange.id,
                        Exchange.full_name,
+                       Exchange.logo,
                        Ticker.base,
                        Ticker.quote,
                        Ticker.price_usd,
@@ -103,7 +104,7 @@ class TickerCRUD:
                 .where(Ticker.price_usd > 0)
                 .where(Ticker.volume_usd > 0)
                 )
-        func.count(stmt)
+
         if currency != "All":
             stmt = stmt.filter(Ticker.quote == currency)
 

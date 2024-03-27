@@ -2,11 +2,11 @@ import datetime
 
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, text, update, null
+from sqlalchemy import select, func, text, update, null, bindparam
 from loguru import logger as lg
 
 from src.db.models import Exchange, ExchangeMapper
-from src.lib.schema import ExchangeResponse, Market, ExchangeNameResponse
+from src.lib.schema import ExchangeResponse, StrapiMarket, ExchangeNameResponse
 
 
 class ExchangeCRUD:
@@ -15,7 +15,6 @@ class ExchangeCRUD:
         result = await session.execute(stmt)
         result = result.mappings()
         return [ExchangeNameResponse.model_validate(res) for res in result]
-
 
     async def get_exchanges(self, session: AsyncSession):
         stmt = select(Exchange.id, Exchange.cg_identifier).where(Exchange.cg_identifier.is_not(null()))
@@ -29,21 +28,13 @@ class ExchangeCRUD:
         result = result.scalars().all()
         return result
 
-    async def update(self, session: AsyncSession, exchange: Market):
-        stmt = (update(Exchange)
-        .where(Exchange.cg_identifier == exchange.identifier)
-        .values(
-            {
-                Exchange.logo: exchange.logo,
-                Exchange.full_name: exchange.name,
-                Exchange.centralized: exchange.centralized,
-                Exchange.trust_score: exchange.trust_score
-            }
+    async def update_many(self, session: AsyncSession, exchanges: list[StrapiMarket]):
+        conn = await session.connection()
+        await conn.execute(
+            update(Exchange).where(Exchange.ccxt_name == bindparam("name")),
+            [ex.model_dump() for ex in exchanges]
         )
-        )
-        await session.execute(stmt)
         await session.commit()
-
 
     async def save_mappings(self, session: AsyncSession, exchange_id: int, mapped: dict):
         mapping_list = [dict(exchange_id=exchange_id, symbol=symbol, cg_id=gecko) for symbol, gecko in mapped.items()]

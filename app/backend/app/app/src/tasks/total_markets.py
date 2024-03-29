@@ -18,8 +18,8 @@ async def main():
             result = []
 
             for ticker in tickers:
-                coins[ticker.base_cg].price = np.append(coins[ticker.base_cg].price, ticker.price_usd)
-                coins[ticker.base_cg].volume = np.append(coins[ticker.base_cg].volume, ticker.volume_usd)
+                coins[ticker.cg_id].price = np.append(coins[ticker.cg_id].price, ticker.price_usd)
+                coins[ticker.cg_id].volume = np.append(coins[ticker.cg_id].volume, ticker.volume_usd)
 
             btc_coin = calculate_bitcoin_values('bitcoin', coins['bitcoin'])
 

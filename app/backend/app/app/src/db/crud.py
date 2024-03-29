@@ -127,13 +127,18 @@ async def save_matched_tickers(session: AsyncSession, tickers: list[schema.Ticke
 async def get_all_tickers(session: AsyncSession) -> list[schema.TickerSimple]:
     unix_stamp_now = int(time.time()) - 10800  # 3 hours
     stmt = (
-        select(Ticker.base_cg, Ticker.price_usd, Ticker.volume_usd)
+        select(Ticker.base_cg.label("cg_id"), Ticker.price_usd, Ticker.volume_usd)
         .where(Ticker.base_cg.is_not(null()))
         .where(Ticker.price_usd > 0)
         .where(Ticker.volume_usd > 0)
         .where(Ticker.last_update > unix_stamp_now)
-        .order_by(Ticker.volume_usd.desc())
-    )
+    ).union_all(
+        select(Ticker.quote_cg.label("cg_id"), Ticker.price_usd, Ticker.volume_usd)
+        .where(Ticker.quote_cg.is_not(null()))
+        .where(Ticker.price_usd > 0)
+        .where(Ticker.volume_usd > 0)
+        .where(Ticker.last_update > unix_stamp_now)
+    ).order_by(Ticker.volume_usd.desc())
     result = await session.execute(stmt)
     result = result.mappings()
     result = [schema.TickerSimple.model_validate(res) for res in result]

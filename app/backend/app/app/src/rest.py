@@ -41,15 +41,12 @@ async def fetch_all_ohlcv(exchanges: list[utils.Match],
 async def fetch_ohlcv_loop(match: utils.Match,
                            timeframe: Literal['5m', '1h', '1d'],
                            stamps: list[int]) -> list[schema.HistoricalResponse] | None:
-    if match.symbol == "USDT":
-        return [schema.HistoricalResponse(
-            cg_id=match.cg_id,
-            stamp=stamp,
-            price=1
-        ) for stamp in stamps]
     result = []
+    if match.symbol == "USDT":
+        ohlcvs = await match.exchange.fetch_ohlcv(match.symbol + "/USD", timeframe, limit=100)
+    else:
+        ohlcvs = await match.exchange.fetch_ohlcv(match.symbol + "/USDT", timeframe, limit=100)
 
-    ohlcvs = await match.exchange.fetch_ohlcv(match.symbol + "/USDT", timeframe, limit=100)
     for ohlcv in ohlcvs:
         stamp = int(ohlcv[0]) // 1000
         if stamp in stamps:

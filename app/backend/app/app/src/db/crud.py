@@ -137,7 +137,8 @@ async def get_all_tickers(session: AsyncSession) -> list[schema.TickerSimple]:
         .where(Ticker.volume_usd > 0)
         .where(Ticker.last_update > unix_stamp_now)
     ).union_all(
-        select(Ticker.quote_cg.label("cg_id"), select(0).label("price_usd"), Ticker.volume_usd)
+        select(Ticker.quote_cg.label("cg_id"), QuoteMapper.rate.label("price_usd"), Ticker.volume_usd)
+        .where(Ticker.quote == QuoteMapper.currency)
         .where(Ticker.quote_cg.is_not(null()))
         .where(Ticker.volume_usd > 0)
         .where(Ticker.last_update > unix_stamp_now)
@@ -182,7 +183,11 @@ async def get_coins_from_db(session: AsyncSession):
 
 
 async def main():
-    ...
+    from src.db.connection import AsyncSessionFactory
+    async with AsyncSessionFactory() as session:
+        tickers = await get_all_tickers(session)
+        for ticker in tickers[:100]:
+            print(ticker)
 
 if __name__ == "__main__":
     asyncio.run(main())

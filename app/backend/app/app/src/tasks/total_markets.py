@@ -15,17 +15,13 @@ async def main():
         async with AsyncSessionFactory() as session:
             tickers = await get_all_tickers(session=session)
             coins = defaultdict(CoinInput)
-            quote_coins = defaultdict(CoinInput)
             result = []
 
             for ticker in tickers:
-                if ticker.price_usd > 0:
-                    coins[ticker.cg_id].price = np.append(coins[ticker.cg_id].price, ticker.price_usd)
-                    coins[ticker.cg_id].volume = np.append(coins[ticker.cg_id].volume, ticker.volume_usd)
-                else:
-                    quote_coins[ticker.cg_id].volume = np.append(quote_coins[ticker.cg_id].volume, ticker.volume_usd)
+                coins[ticker.cg_id].price = np.append(coins[ticker.cg_id].price, ticker.price_usd)
+                coins[ticker.cg_id].volume = np.append(coins[ticker.cg_id].volume, ticker.volume_usd)
 
-            btc_coin = calculate_bitcoin_values('bitcoin', coins['bitcoin'], quote_coins['bitcoin'])
+            btc_coin = calculate_bitcoin_values('bitcoin', coins['bitcoin'])
 
             result.append(CoinOutput(
                 cg_id=btc_coin.cg_id,
@@ -41,16 +37,12 @@ async def main():
                 # calculate z-score for every price
                 z = np.abs(stats.zscore(arrays.price))
                 # delete all outliers from prices and volumes arrays
-                clean_data_prices = np.delete(arrays.price, np.where(z >= 2))
-                clean_data_volumes = np.delete(arrays.volume, np.where(z >= 2))
+                clean_data_prices = np.delete(arrays.price, np.where(z >= 3))
+                clean_data_volumes = np.delete(arrays.volume, np.where(z >= 3))
                 # calculate weighted average
                 avg_price_usd = np.average(clean_data_prices, weights=clean_data_volumes)
                 # calculate sum of all volumes
-                quote_arrays = quote_coins.get(cg_id)
-                if quote_arrays:
-                    sum_volumes_usd = np.sum(arrays.volume) + np.sum(quote_arrays.volume)
-                else:
-                    sum_volumes_usd = np.sum(arrays.volume)
+                sum_volumes_usd = np.sum(arrays.volume)
 
                 result.append(CoinOutput(
                     cg_id=cg_id,
@@ -67,7 +59,7 @@ async def main():
         lg.error(f"Last values calculation failed: {e}")
 
 
-def calculate_bitcoin_values(cg_id, arrays: CoinInput, quote_arrays: CoinInput) -> CoinOutput:
+def calculate_bitcoin_values(cg_id, arrays: CoinInput) -> CoinOutput:
     # calculate z-score for every price
     z = np.abs(stats.zscore(arrays.price))
     # delete all outliers from prices and volumes arrays
@@ -76,14 +68,14 @@ def calculate_bitcoin_values(cg_id, arrays: CoinInput, quote_arrays: CoinInput) 
     # calculate weighted average
     avg_price_usd = np.average(clean_data_prices, weights=clean_data_volumes)
     # calculate sum of all volumes
-    total_volume_usd = np.sum(arrays.volume) + np.sum(quote_arrays.volume)
+    sum_volumes_usd = np.sum(arrays.volume)
 
     return CoinOutput(
         cg_id=cg_id,
         price_usd=avg_price_usd,
         price_btc=1,
-        volume_usd=total_volume_usd,
-        volume_btc=np.divide(total_volume_usd, avg_price_usd)
+        volume_usd=sum_volumes_usd,
+        volume_btc=np.divide(sum_volumes_usd, avg_price_usd)
     )
 
 

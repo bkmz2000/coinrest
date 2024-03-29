@@ -125,17 +125,20 @@ async def save_matched_tickers(session: AsyncSession, tickers: list[schema.Ticke
 
 
 async def get_all_tickers(session: AsyncSession) -> list[schema.TickerSimple]:
+    """
+    Get all base ticker with their prices and volumes. And get all quote tickers with their volumes only
+    """
+
     unix_stamp_now = int(time.time()) - 10800  # 3 hours
     stmt = (
-        select(Ticker.base_cg.label("cg_id"), Ticker.price_usd, Ticker.volume_usd)
+        select(Ticker.base_cg.label("cg_id"), Ticker.price_usd.label("price_usd"), Ticker.volume_usd)
         .where(Ticker.base_cg.is_not(null()))
         .where(Ticker.price_usd > 0)
         .where(Ticker.volume_usd > 0)
         .where(Ticker.last_update > unix_stamp_now)
     ).union_all(
-        select(Ticker.quote_cg.label("cg_id"), Ticker.price_usd, Ticker.volume_usd)
+        select(Ticker.quote_cg.label("cg_id"), select(0).label("price_usd"), Ticker.volume_usd)
         .where(Ticker.quote_cg.is_not(null()))
-        .where(Ticker.price_usd > 0)
         .where(Ticker.volume_usd > 0)
         .where(Ticker.last_update > unix_stamp_now)
     ).order_by(Ticker.volume_usd.desc())

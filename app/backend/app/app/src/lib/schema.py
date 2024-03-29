@@ -31,7 +31,7 @@ class CoinOutput(BaseModel):
 
 class TickerSimple(BaseModel):
     cg_id: str
-    price_usd: float
+    price_usd: float | None
     volume_usd: float
 
 

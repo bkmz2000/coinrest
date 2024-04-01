@@ -1,5 +1,6 @@
 import asyncio
 import time
+from collections import defaultdict
 from typing import Iterable, Literal
 from ccxt.async_support.base.exchange import BaseExchange
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,23 +26,34 @@ async def get_coins(session: AsyncSession) -> dict[str, utils.CoinResponse]:
 async def fetch_markets_chart(exchanges: list[utils.Match],
                               timeframe: Literal['5m', '1h', '1d'],
                               stamps: list[int]) -> list[schema.HistoricalResponse] | None:
-    result = await fetch_all_ohlcv(exchanges,timeframe, stamps)
+    result = await fetch_all_ohlcv(exchanges, timeframe, stamps)
     return result
 
 
 async def fetch_all_ohlcv(exchanges: list[utils.Match],
                           timeframe: Literal['5m', '1h', '1d'],
                           stamps: list[int]) -> list[schema.HistoricalResponse] | None:
-    tasks = [asyncio.create_task(fetch_ohlcv_loop(exchange, timeframe, stamps))
+    result_list = []
+    results = defaultdict(list)
+    tasks = [asyncio.create_task(fetch_ohlcv_loop(exchange, timeframe, stamps, results))
              for exchange in exchanges]
-    result = await _get_first_task(tasks)
-    return result
+    await _get_first_task(tasks, results)
+    for stamp, prices in results.items():
+        if prices:
+            result_list.append(
+                schema.HistoricalResponse(
+                    cg_id=exchanges[0].cg_id,
+                    price=sorted(prices)[len(prices) // 2],
+                    stamp=stamp
+                )
+            )
+    return result_list
 
 
 async def fetch_ohlcv_loop(match: utils.Match,
                            timeframe: Literal['5m', '1h', '1d'],
-                           stamps: list[int]) -> list[schema.HistoricalResponse] | None:
-    result = []
+                           stamps: list[int],
+                           results: dict):
     if match.symbol == "USDT":
         ohlcvs = await match.exchange.fetch_ohlcv(match.symbol + "/USD", timeframe, limit=100)
     else:
@@ -50,19 +62,13 @@ async def fetch_ohlcv_loop(match: utils.Match,
     for ohlcv in ohlcvs:
         stamp = int(ohlcv[0]) // 1000
         if stamp in stamps:
-            result.append(schema.HistoricalResponse(
-                cg_id=match.cg_id,
-                stamp=stamp,
-                price=ohlcv[4]
-            ))
+            if ohlcv[4]:
+                results[stamp].append(ohlcv[4])
+    return results
 
-    return result
-
-
-async def _get_first_task(tasks: Iterable[asyncio.Task]) -> list[schema.HistoricalResponse] | None:
+async def _get_first_task(tasks: Iterable[asyncio.Task], results: dict):
     if not tasks:
         return None
-    result: list[tuple[int, int]] | None = None
 
     # Fetch all exchanges in parallel
     done, pending = await asyncio.wait(
@@ -80,10 +86,16 @@ async def _get_first_task(tasks: Iterable[asyncio.Task]) -> list[schema.Historic
 
     gather = asyncio.gather(*pending, return_exceptions=True)
 
-    if not done or result:  # If first result is not exception,
-        gather.cancel()  # or cancelled due to timeout - cancel other tasks
+    res_number = list(results.values())
+    if res_number:
+        res_number = len(res_number[0])
+    else:
+        res_number = 0
+
+    if res_number > 2:  # If enough number of results,
+        gather.cancel()  # cancel other tasks
     elif pending:
-        result = await _get_first_task(pending)  # Wait the next task if previous is None
+        await _get_first_task(pending, results)  # Wait the next task if previous is None
     else:
         return None  # If no more pending tasks
 
@@ -91,5 +103,3 @@ async def _get_first_task(tasks: Iterable[asyncio.Task]) -> list[schema.Historic
         await gather
     except asyncio.CancelledError:
         pass
-
-    return result

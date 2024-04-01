@@ -11,7 +11,6 @@ from loguru import logger as lg
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware.cors import CORSMiddleware
 
-
 from src.db.connection import get_db, engine, AsyncSessionFactory
 from src.rest import get_coins
 from src.worker import last_tickers_task, old_update_mapper_task
@@ -22,7 +21,6 @@ from src.deps.historical import HistoricalMarkets
 from sqladmin import Admin
 from src.admin import views
 from src.rest import fetch_markets_chart
-
 
 # r: Redis = None
 markets: HistoricalMarkets = None
@@ -72,15 +70,22 @@ async def coins(session: AsyncSession = Depends(get_db)):
 @app.post("/api/coins/historical", response_model=list[HistoricalResponse])
 async def coins_historical(coins: list[HistoricalRequest]):
     response = []
-    for coin in coins:
-        matched_exchanges = markets.mapper[coin.cg_id]
-        lg.info(matched_exchanges)
-        if matched_exchanges:
-            stamps = await fetch_markets_chart(exchanges=matched_exchanges,
-                                               timeframe=coin.timeframe,
-                                               stamps=coin.stamps)
-            if stamps:
-                response.extend(stamps)
+
+    beg = 0
+    step = 300
+    end = len(coins)
+    for i in range(beg, end, step):
+        tasks = []
+        for coin in coins[i:i+step]:
+            matched_exchanges = markets.mapper[coin.cg_id]
+            # lg.info(matched_exchanges)
+            if matched_exchanges:
+                tasks.append(asyncio.create_task(fetch_markets_chart(exchanges=matched_exchanges,
+                                                                     timeframe=coin.timeframe,
+                                                                     stamps=coin.stamps)))
+        result = await asyncio.gather(*tasks)
+        _ = [response.extend(l) for l in result]
+
     return response
 
 
@@ -91,4 +96,3 @@ async def update():
     """
     old_update_mapper_task.apply_async()
     return {"message": "Mapper updating..."}
-

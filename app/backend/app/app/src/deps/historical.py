@@ -82,8 +82,10 @@ class HistoricalMapper:
 
     def __getitem__(self, item: str) -> list[Match] | None:
         mapped_markets = self.mapper.get(item)
-        if mapped_markets and len(mapped_markets) > 3:
-            mapped_markets = random.sample(mapped_markets, k=3)
+        if item == "tether":
+            return mapped_markets
+        if mapped_markets and len(mapped_markets) > 6:
+            mapped_markets = random.sample(mapped_markets, k=6)
         return mapped_markets
 
 

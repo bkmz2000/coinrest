@@ -1,7 +1,8 @@
 import asyncio
 from collections import defaultdict
 from src.db.connection import AsyncSessionFactory
-from src.db.crud import get_all_tickers, save_last
+from src.db.crud import get_all_tickers
+from src.db.cruds.crud_last import LastCRUD
 from loguru import logger as lg
 import scipy.stats as stats
 import numpy as np
@@ -13,6 +14,7 @@ async def main():
     lg.info("Start last values calculation")
     try:
         async with AsyncSessionFactory() as session:
+            crud = LastCRUD()
             tickers = await get_all_tickers(session=session)
             coins = defaultdict(CoinInput)
             result = []
@@ -54,7 +56,7 @@ async def main():
 
             # for coin in result:
             #     print(coin)
-            await save_last(session=session, coins=result)
+            await crud.save_last(session=session, coins=result)
     except Exception as e:
         lg.error(f"Last values calculation failed: {e}")
 

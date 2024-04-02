@@ -29,25 +29,7 @@ class CoinOutput(BaseModel):
     price_btc: float | None
     volume_btc: float | None
 
-class TickerSimple(BaseModel):
-    cg_id: str
-    price_usd: float | None
-    volume_usd: float
 
-
-class TickerToMatch(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    exchange_id: int
-    base: str
-    price_usd: float
-
-
-class TickerMatched(BaseModel):
-    exchange_id: int
-    base_cg: str
-    symbol: str
 
 
 class TickerResponse(BaseModel):
@@ -85,18 +67,6 @@ class MarketMapping(BaseModel):
     updated_at: datetime.datetime
 
 
-class UpdateEventFrom(BaseModel):
-    event: str
-    createdAt: datetime.datetime
-    model: str
-    entry: dict
-
-
-class UpdateEventTo(BaseModel):
-    ticker_num: int
-    last_update: str
-
-
 class CoinResponse(BaseModel):
     id: int
     exchange: str
@@ -106,6 +76,14 @@ class CoinResponse(BaseModel):
     volume_24h: float
     exchange_type: Literal['ALL', 'CEX', 'DEX']
     trading_type: Literal['Spot', 'Perpetual', 'Futures']
+
+
+class PriceResponse(BaseModel):
+    usd: float | None
+    usd_24h_vol: float | None
+
+    btc: float | None
+    btc_24h_vol: float | None
 
 
 class MarketResponse(BaseModel):

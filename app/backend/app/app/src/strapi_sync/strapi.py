@@ -4,7 +4,7 @@ import os
 import aiohttp
 
 from loguru import logger as lg
-from src.lib.schema import UpdateEventTo
+from src.lib.utils import UpdateEventTo
 
 # base_url = os.environ.get("STRAPI_URL", 'http://0.0.0.0:1337')
 base_url = os.environ.get("STRAPI_URL", 'http://192.168.0.103:1337')

@@ -8,7 +8,8 @@ from loguru import logger as lg
 
 from src.db.connection import AsyncSessionFactory
 from src.deps.converter import Converter
-from src.lib.schema import TickerInfo, UpdateEventTo
+from src.lib.utils import UpdateEventTo
+from src.lib.schema import TickerInfo
 from src.strapi_sync.strapi import update_strapi_state
 from src.db import crud
 

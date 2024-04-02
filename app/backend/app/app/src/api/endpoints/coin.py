@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, Query
 from src.db import connection
 from src.db.cruds.crud_ticker import TickerCRUD
+from src.db.cruds.crud_last import LastCRUD
 from src.lib.schema import MarketResponse, CoinResponse
 from loguru import logger as lg
 
@@ -58,3 +59,9 @@ async def get_ticker_exchanges(cg_id: str,
         total=total,
         quotes=tuple(quotes)
     )
+
+
+@router.get("/lost")
+async def lost_coins(session: AsyncSession = Depends(connection.get_db)):
+    crud = LastCRUD()
+    return await crud.get_lost_coins(session=session)

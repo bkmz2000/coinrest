@@ -7,6 +7,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import StartPage from "./components/StartPage.vue";
 import exPage from "./components/ExPage.vue";
 import TickerPage from "./components/TickerPage.vue";
+import LostCoinPage from "./components/LostCoinPage.vue";
 
 const app = createApp(App)
 
@@ -14,6 +15,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
       {path: '/', component: StartPage},
+      {path: '/lost', component: LostCoinPage},
       {
           path: '/exchange/:exchange',
           name: 'exchange',

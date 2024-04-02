@@ -12,15 +12,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware.cors import CORSMiddleware
 
 from src.db.connection import get_db, engine, AsyncSessionFactory
-from src.rest import get_coins
 from src.worker import last_tickers_task, old_update_mapper_task
 from src.api.routers import api_router
-from src.lib.utils import CoinResponse
-from src.lib.schema import HistoricalRequest, HistoricalResponse
+from src.lib.schema import HistoricalRequest, HistoricalResponse, PriceResponse
 from src.deps.historical import HistoricalMarkets
 from sqladmin import Admin
 from src.admin import views
-from src.rest import fetch_markets_chart
+from src.api.rest.last_prices import get_coins
+from src.api.rest.historical import fetch_markets_chart
 
 # r: Redis = None
 markets: HistoricalMarkets = None
@@ -62,7 +61,7 @@ admin.add_view(views.ExchangesAdmin)
 admin.add_view(views.TickerAdmin)
 
 
-@app.get("/api/coins/markets_price", response_model=dict[str, CoinResponse])
+@app.get("/api/coins/markets_price", response_model=dict[str, PriceResponse])
 async def coins(session: AsyncSession = Depends(get_db)):
     return await get_coins(session=session)
 

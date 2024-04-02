@@ -3,7 +3,11 @@ import StartPage from './components/StartPage.vue'
 </script>
 
 <template>
-  <router-view/>
+  <div>
+    <router-link to="/">Main</router-link> |
+    <router-link to="/lost">Lost coins</router-link>
+    <router-view/>
+  </div>
 </template>
 
 <style scoped>

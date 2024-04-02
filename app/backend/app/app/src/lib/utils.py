@@ -22,6 +22,36 @@ class BaseMapper(BaseModel):
     symbol: str
 
 
+class LastLost(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    cg_id: str
+    price_usd: float | None
+    volume_usd: float | None
+    last_update: datetime.datetime
+
+
+class TickerToMatch(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    exchange_id: int
+    base: str
+    price_usd: float
+
+
+class TickerSimple(BaseModel):
+    cg_id: str
+    price_usd: float | None
+    volume_usd: float
+
+
+class TickerMatched(BaseModel):
+    exchange_id: int
+    base_cg: str
+    symbol: str
+
+
 class Last(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -33,19 +63,22 @@ class Last(BaseModel):
     volume_btc: float | None
 
 
+class UpdateEventFrom(BaseModel):
+    event: str
+    createdAt: datetime.datetime
+    model: str
+    entry: dict
+
+
+class UpdateEventTo(BaseModel):
+    ticker_num: int
+    last_update: str
+
 @dataclass
 class Coin:
     exchange: str = ''
     volume: float = 0
     price: float = 0
-
-
-class CoinResponse(BaseModel):
-    usd: float | None
-    usd_24h_vol: float | None
-
-    btc: float | None
-    btc_24h_vol: float | None
 
 
 class QuoteRate(BaseModel):
@@ -56,7 +89,7 @@ class QuoteRate(BaseModel):
     update_at: datetime.datetime | None = None
 
 
-def sleeping(func):
+def repeat_forever(func):
     """
         Restart func every 5 minutes/
         If task working more than 5 min, sleep only 2 secs

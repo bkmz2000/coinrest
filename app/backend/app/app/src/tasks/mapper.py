@@ -3,7 +3,7 @@ from loguru import logger as lg
 
 from src.db.connection import AsyncSessionFactory
 from src.lib.client import fetch_data_from_hodler
-from src.lib.schema import TickerToMatch, TickerMatched
+from src.lib.utils import TickerToMatch, TickerMatched
 from src.db import crud
 from src.db.cruds import crud_exchange
 

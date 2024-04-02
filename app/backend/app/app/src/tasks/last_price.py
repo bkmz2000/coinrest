@@ -2,7 +2,7 @@ import asyncio
 from loguru import logger as lg
 from src.deps.markets import Market
 from src.lib.quotes import active_exchanges
-from src.lib.utils import sleeping
+from src.lib.utils import repeat_forever
 
 
 async def main():
@@ -11,7 +11,7 @@ async def main():
     await asyncio.gather(*[get_price_and_volume(ex=ex) for ex in exchanges])
 
 
-@sleeping
+@repeat_forever
 async def get_price_and_volume(ex: str):
     """
         Get last price and volume for exchange tickers and store them to db

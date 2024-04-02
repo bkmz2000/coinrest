@@ -1,26 +1,9 @@
 import asyncio
-import time
 from collections import defaultdict
 from typing import Iterable, Literal
-from ccxt.async_support.base.exchange import BaseExchange
-from sqlalchemy.ext.asyncio import AsyncSession
-from loguru import logger as lg
 
-from src.db.crud import get_coins_from_db
 from src.lib import utils
 from src.lib import schema
-
-
-async def get_coins(session: AsyncSession) -> dict[str, utils.CoinResponse]:
-    coins = await get_coins_from_db(session=session)
-    result = {}
-    for coin in coins:
-        result[coin.cg_id] = utils.CoinResponse(usd=coin.price_usd,
-                                                usd_24h_vol=coin.volume_usd,
-                                                btc=coin.price_btc,
-                                                btc_24h_vol=coin.volume_btc,
-                                                )
-    return result
 
 
 async def fetch_markets_chart(exchanges: list[utils.Match],
@@ -65,6 +48,7 @@ async def fetch_ohlcv_loop(match: utils.Match,
             if ohlcv[4]:
                 results[stamp].append(ohlcv[4])
     return results
+
 
 async def _get_first_task(tasks: Iterable[asyncio.Task], results: dict):
     if not tasks:

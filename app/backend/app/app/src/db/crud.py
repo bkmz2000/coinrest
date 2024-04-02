@@ -107,24 +107,24 @@ async def save_tickers(session: AsyncSession, tickers: list[schema.TickerInfo]):
     await session.commit()
 
 
-async def get_db_tickers(session: AsyncSession) -> list[schema.TickerToMatch]:
+async def get_db_tickers(session: AsyncSession) -> list[utils.TickerToMatch]:
     stmt = (select(Ticker.id, Ticker.exchange_id, Ticker.base, Ticker.price_usd).
             where(Ticker.price_usd > 0).
             where(Ticker.base_cg.is_(null()))
             )
     result = await session.execute(stmt)
     result = result.mappings()
-    result = [schema.TickerToMatch.model_validate(res) for res in result]
+    result = [utils.TickerToMatch.model_validate(res) for res in result]
     return result
 
 
-async def save_matched_tickers(session: AsyncSession, tickers: list[schema.TickerMatched]):
+async def save_matched_tickers(session: AsyncSession, tickers: list[utils.TickerMatched]):
     ticker_list = [ticker.model_dump() for ticker in tickers]
     await session.execute(update(Ticker), ticker_list)
     await session.commit()
 
 
-async def get_all_tickers(session: AsyncSession) -> list[schema.TickerSimple]:
+async def get_all_tickers(session: AsyncSession) -> list[utils.TickerSimple]:
     """
     Get all base ticker with their prices and volumes. And get all quote tickers with their volumes only
     """
@@ -145,41 +145,9 @@ async def get_all_tickers(session: AsyncSession) -> list[schema.TickerSimple]:
     ).order_by(Ticker.volume_usd.desc())
     result = await session.execute(stmt)
     result = result.mappings()
-    result = [schema.TickerSimple.model_validate(res) for res in result]
+    result = [utils.TickerSimple.model_validate(res) for res in result]
     return result
 
-
-async def save_last(session: AsyncSession, coins: list[schema.CoinOutput]):
-    values = [coin.model_dump() for coin in coins]
-    stmt = insert(LastValues).values(values)
-    update_stmt = stmt.on_conflict_do_update(
-        index_elements=[LastValues.cg_id],
-        set_=dict(
-            price_usd=stmt.excluded.price_usd,
-            volume_usd=stmt.excluded.volume_usd,
-            price_btc=stmt.excluded.price_btc,
-            volume_btc=stmt.excluded.volume_btc,
-            last_update=datetime.datetime.now()
-        )
-    )
-    await session.execute(update_stmt)
-    await session.commit()
-
-
-async def get_coins_from_db(session: AsyncSession):
-    delta = datetime.datetime.now() - datetime.timedelta(hours=1)
-    stmt = (select(LastValues.cg_id,
-                   LastValues.price_usd,
-                   LastValues.volume_usd,
-                   LastValues.price_btc,
-                   LastValues.volume_btc)
-            .where(LastValues.last_update > delta)
-            .order_by(LastValues.volume_usd.desc())
-            )
-    result = await session.execute(stmt)
-    result = result.mappings()
-    result = [utils.Last.model_validate(res) for res in result]
-    return result
 
 
 async def main():

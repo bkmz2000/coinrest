@@ -18,8 +18,8 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(300.0, strapi_sync_task.s(), name="Sync strapi exchanges data with local db")
 
     sender.add_periodic_task(43200.0, update_mapper_task.s(), name="Update mapper for all exchanges")
-    # sender.add_periodic_task(300.0, update_coingecko_actual_task.s(), name="Update list of actual coingecko coins")
-    # sender.add_periodic_task(300.0, gecko_markets_task.s(), name="Get market data from coingecko")
+    sender.add_periodic_task(300.0, update_coingecko_actual_task.s(), name="Update list of actual coingecko coins")
+    sender.add_periodic_task(300.0, gecko_markets_task.s(), name="Get market data from coingecko")
 
 
 @app.task()

@@ -39,8 +39,8 @@ async def main():
                 # calculate z-score for every price
                 z = np.abs(stats.zscore(arrays.price))
                 # delete all outliers from prices and volumes arrays
-                clean_data_prices = np.delete(arrays.price, np.where(z >= 3))
-                clean_data_volumes = np.delete(arrays.volume, np.where(z >= 3))
+                clean_data_prices = np.delete(arrays.price, np.where(z >= 2))
+                clean_data_volumes = np.delete(arrays.volume, np.where(z >= 2))
                 # calculate weighted average
                 avg_price_usd = np.average(clean_data_prices, weights=clean_data_volumes)
                 # calculate sum of all volumes

@@ -1,3 +1,4 @@
+import datetime
 import time
 
 import sqlalchemy
@@ -181,6 +182,8 @@ class TickerCRUD:
         """
 
         unix_stamp_now = int(time.time()) - 10800  # 3 hours
+        as_date = datetime.datetime.utcfromtimestamp(unix_stamp_now)
+
         stmt = (
             select(Ticker.base_cg.label("cg_id"), Ticker.price_usd.label("price_usd"), Ticker.volume_usd)
             .where(Ticker.base_cg.is_not(null()))
@@ -190,6 +193,7 @@ class TickerCRUD:
         ).union_all(
             select(Ticker.quote_cg.label("cg_id"), QuoteMapper.rate.label("price_usd"), Ticker.volume_usd)
             .where(Ticker.quote == QuoteMapper.currency)
+            .where(QuoteMapper.update_at > as_date)
             .where(Ticker.quote_cg.is_not(null()))
             .where(Ticker.volume_usd > 0)
             .where(Ticker.last_update > unix_stamp_now)

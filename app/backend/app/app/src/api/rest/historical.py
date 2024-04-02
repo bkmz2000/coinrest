@@ -79,7 +79,7 @@ async def _get_first_task(tasks: Iterable[asyncio.Task], results: dict):
     if res_number > 2:  # If enough number of results,
         gather.cancel()  # cancel other tasks
     elif pending:
-        await _get_first_task(pending, results)  # Wait the next task if previous is None
+        await _get_first_task(pending, results)
     else:
         return None  # If no more pending tasks
 

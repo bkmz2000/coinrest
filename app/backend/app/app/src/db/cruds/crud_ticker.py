@@ -2,9 +2,10 @@ import time
 
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, null
 
-from src.db.models import Ticker, Exchange
+from src.db.models import Ticker, Exchange, QuoteMapper
+from src.lib import utils
 from src.lib.schema import TickerResponse, MarketResponse
 
 
@@ -172,3 +173,39 @@ class TickerCRUD:
         elif volume_sort == "DESC":
             return stmt.order_by(Ticker.volume_usd.desc())
         return stmt
+
+
+    async def get_all_tickers(self, session: AsyncSession) -> list[utils.TickerSimple]:
+        """
+        Get all base ticker with their prices and volumes. And get all quote tickers with their volumes only
+        """
+
+        unix_stamp_now = int(time.time()) - 10800  # 3 hours
+        stmt = (
+            select(Ticker.base_cg.label("cg_id"), Ticker.price_usd.label("price_usd"), Ticker.volume_usd)
+            .where(Ticker.base_cg.is_not(null()))
+            .where(Ticker.price_usd > 0)
+            .where(Ticker.volume_usd > 0)
+            .where(Ticker.last_update > unix_stamp_now)
+        ).union_all(
+            select(Ticker.quote_cg.label("cg_id"), QuoteMapper.rate.label("price_usd"), Ticker.volume_usd)
+            .where(Ticker.quote == QuoteMapper.currency)
+            .where(Ticker.quote_cg.is_not(null()))
+            .where(Ticker.volume_usd > 0)
+            .where(Ticker.last_update > unix_stamp_now)
+        ).order_by(Ticker.volume_usd.desc())
+        result = await session.execute(stmt)
+        result = result.mappings()
+        result = [utils.TickerSimple.model_validate(res) for res in result]
+        return result
+
+    async def get_actual_coins(self, session: AsyncSession):
+        unix_stamp_now = int(time.time()) - 10800  # 3 hours
+        stmt = (select(Ticker.base_cg)
+                .group_by(Ticker.base_cg)
+                .having(func.max(Ticker.last_update) > unix_stamp_now)
+                .order_by(func.max(Ticker.last_update).desc())
+                )
+        result = await session.execute(stmt)
+        result = result.scalars().all()
+        return result

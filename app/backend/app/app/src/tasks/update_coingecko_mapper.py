@@ -6,7 +6,6 @@ from src.db.connection import AsyncSessionFactory
 from src.db.cruds.crud_exchange import ExchangeCRUD
 
 
-
 async def main():
     lg.info("New mapper started")
     async with AsyncSessionFactory() as session:

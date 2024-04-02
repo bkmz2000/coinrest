@@ -85,3 +85,10 @@ class LastValues(Base):
     last_update: Mapped[datetime.datetime]
 
     __table_args__ = (UniqueConstraint("cg_id", name="cg_id_unique"),)
+
+
+class ActualCoingecko(Base):
+    __tablename__ = 'actual_coingecko'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    cg_id: Mapped[str]

@@ -124,38 +124,10 @@ async def save_matched_tickers(session: AsyncSession, tickers: list[utils.Ticker
     await session.commit()
 
 
-async def get_all_tickers(session: AsyncSession) -> list[utils.TickerSimple]:
-    """
-    Get all base ticker with their prices and volumes. And get all quote tickers with their volumes only
-    """
-
-    unix_stamp_now = int(time.time()) - 10800  # 3 hours
-    stmt = (
-        select(Ticker.base_cg.label("cg_id"), Ticker.price_usd.label("price_usd"), Ticker.volume_usd)
-        .where(Ticker.base_cg.is_not(null()))
-        .where(Ticker.price_usd > 0)
-        .where(Ticker.volume_usd > 0)
-        .where(Ticker.last_update > unix_stamp_now)
-    ).union_all(
-        select(Ticker.quote_cg.label("cg_id"), QuoteMapper.rate.label("price_usd"), Ticker.volume_usd)
-        .where(Ticker.quote == QuoteMapper.currency)
-        .where(Ticker.quote_cg.is_not(null()))
-        .where(Ticker.volume_usd > 0)
-        .where(Ticker.last_update > unix_stamp_now)
-    ).order_by(Ticker.volume_usd.desc())
-    result = await session.execute(stmt)
-    result = result.mappings()
-    result = [utils.TickerSimple.model_validate(res) for res in result]
-    return result
-
 
 
 async def main():
-    from src.db.connection import AsyncSessionFactory
-    async with AsyncSessionFactory() as session:
-        tickers = await get_all_tickers(session)
-        for ticker in tickers[:100]:
-            print(ticker)
+    ...
 
 if __name__ == "__main__":
     asyncio.run(main())

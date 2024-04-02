@@ -89,6 +89,11 @@ class QuoteRate(BaseModel):
     update_at: datetime.datetime | None = None
 
 
+@dataclass
+class ActualCoinIn:
+    cg_id: str
+
+
 def repeat_forever(func):
     """
         Restart func every 5 minutes/

@@ -86,6 +86,8 @@ class HistoricalMapper:
             return mapped_markets
         if mapped_markets and len(mapped_markets) > 6:
             mapped_markets = random.sample(mapped_markets, k=6)
+        elif mapped_markets and len(mapped_markets) < 3:
+            return None
         return mapped_markets
 
 

@@ -22,7 +22,7 @@ async def fetch_all_ohlcv(exchanges: list[utils.Match],
              for exchange in exchanges]
     await _get_first_task(tasks, results)
     for stamp, prices in results.items():
-        if prices:
+        if prices and len(prices) > 2:
             result_list.append(
                 schema.HistoricalResponse(
                     cg_id=exchanges[0].cg_id,

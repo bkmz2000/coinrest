@@ -1,13 +1,17 @@
 import asyncio
+import sys
+
 from loguru import logger as lg
 from src.deps.markets import Market
 from src.lib.quotes import active_exchanges
 from src.lib.utils import repeat_forever
+import traceback
+
 
 
 async def main():
     exchanges = active_exchanges
-    # exchanges = ['onetrading']
+    # exchanges = ['bingx']
     await asyncio.gather(*[get_price_and_volume(ex=ex) for ex in exchanges])
 
 
@@ -28,7 +32,7 @@ async def get_price_and_volume(ex: str):
             lg.info(f"{market.exchange_name} normalize {len(normalized_tickers)} tickers")
             await market.save_tickers(normalized_tickers)
     except Exception as e:
-        lg.error(e)
+        lg.error(e.with_traceback(traceback.print_exc(100, sys.stdout)))
 
 
 if __name__ == "__main__":

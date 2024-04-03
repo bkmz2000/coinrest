@@ -7,7 +7,7 @@ from loguru import logger as lg
 from src.lib.utils import UpdateEventTo
 
 # base_url = os.environ.get("STRAPI_URL", 'http://0.0.0.0:1337')
-base_url = os.environ.get("STRAPI_URL", 'http://192.168.0.103:1337')
+base_url = os.environ.get("STRAPI_URL")
 token = os.environ.get("STRAPI_TOKEN")
 
 headers = {"Authorization": f"bearer {token}", "Content-Type": "application/json"}
@@ -30,7 +30,9 @@ async def update(strapi_id: int, data: dict) -> None:
         payload = {
             "data": data
         }
-        await session.put(url, json=payload, headers=headers)
+        async with session.put(url, json=payload, headers=headers) as resp:
+            if not resp or resp.status != 200:
+                lg.warning(f"Cant update strapi {resp}")
 
 
 async def update_strapi_state(exchange: str, data: UpdateEventTo):

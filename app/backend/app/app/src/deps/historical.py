@@ -45,7 +45,8 @@ class HistoricalMarkets:
                 await exchange.load_markets()
                 break
             except Exception as e:
-                lg.warning(f"Error markets for: {exchange.id}, attempt: {attempt + 1}, {str(e)[:100]}")
+                ...
+                # lg.warning(f"Error markets for: {exchange.id}, attempt: {attempt + 1}, {str(e)[:100]}")
             await asyncio.sleep(attempt + 1)
         else:
             await self._close_markets(exchange)

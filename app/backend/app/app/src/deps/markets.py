@@ -46,9 +46,9 @@ class Market:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.exchange:
-            lg.info(f"{self.exchange.id} Closed")
-            await self.exchange.close()
+        await self.exchange.close()
+        lg.info(f"{self.exchange.id} Closed")
+
 
     async def _load_markets(self) -> bool:
         """Load all market data from exchange"""
@@ -57,11 +57,13 @@ class Market:
                 await self.exchange.load_markets()
                 break
             except Exception as e:
-                lg.warning(f"Error markets for: {self.exchange.id}, attempt: {attempt + 1}, {str(e)[:100]}")
+                ...  # number of attempts doesn't matter, spam only.
+                # lg.warning(f"Error markets for: {self.exchange.id}, attempt: {attempt + 1}, {str(e)[:100]}")
             await asyncio.sleep(attempt + 1)
         else:
-            await self.exchange.close()
-            lg.error(f"{self.exchange.id} failed load markets :(")
+            self.exchange.markets = {}
+            lg.warning(f"{self.exchange.id} failed load markets :(")
+
 
     async def fetch_all_tickers(self, symbols: set, target: Literal['map', 'vol'] = 'map') -> dict:
         """
@@ -148,6 +150,8 @@ class Market:
             Get all market trading pairs(symbols) without derivatives
         """
         symbols = set()
+        if not self.exchange.markets:
+            return symbols
         for symbol, prop in self.exchange.markets.items():
             if ":" in symbol or "/" not in symbol:  # ':' and no '/' only in derivative symbol, skip it
                 continue

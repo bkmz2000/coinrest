@@ -22,13 +22,13 @@ from src.api.rest.last_prices import get_coins
 from src.api.rest.historical import fetch_markets_chart
 
 # r: Redis = None
-markets: HistoricalMarkets = None
+# markets: HistoricalMarkets = None
 
-async def get_markets():
-    global markets
-    markets = HistoricalMarkets()
-    async with AsyncSessionFactory() as session:
-        await markets.load_markets(session=session)
+# async def get_markets():
+#     global markets
+#     markets = HistoricalMarkets()
+#     async with AsyncSessionFactory() as session:
+#         await markets.load_markets(session=session)
 
 
 @asynccontextmanager
@@ -37,13 +37,13 @@ async def lifespan(app: FastAPI):
     # r = redis.Redis(host=os.getenv("REDIS_HOST"), port=int(os.environ.get("REDIS_PORT")), decode_responses=True)
     last_tickers_task.apply_async()
 
-    loop = asyncio.get_running_loop()
-    asyncio.run_coroutine_threadsafe(get_markets(), loop)
+    # loop = asyncio.get_running_loop()
+    # asyncio.run_coroutine_threadsafe(get_markets(), loop)
 
     yield
 
     # await r.aclose()
-    await markets.close_markets()
+    # await markets.close_markets()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -68,24 +68,25 @@ async def coins(session: AsyncSession = Depends(get_db)):
 
 @app.post("/api/coins/historical", response_model=list[HistoricalResponse])
 async def coins_historical(coins: list[HistoricalRequest]):
-    response = []
-
-    beg = 0
-    step = 300
-    end = len(coins)
-    for i in range(beg, end, step):
-        tasks = []
-        for coin in coins[i:i+step]:
-            matched_exchanges = markets.mapper[coin.cg_id]
-            # lg.info(matched_exchanges)
-            if matched_exchanges:
-                tasks.append(asyncio.create_task(fetch_markets_chart(exchanges=matched_exchanges,
-                                                                     timeframe=coin.timeframe,
-                                                                     stamps=coin.stamps)))
-        result = await asyncio.gather(*tasks)
-        _ = [response.extend(l) for l in result]
-
-    return response
+    return []
+    # response = []
+    #
+    # beg = 0
+    # step = 300
+    # end = len(coins)
+    # for i in range(beg, end, step):
+    #     tasks = []
+    #     for coin in coins[i:i+step]:
+    #         matched_exchanges = markets.mapper[coin.cg_id]
+    #         # lg.info(matched_exchanges)
+    #         if matched_exchanges:
+    #             tasks.append(asyncio.create_task(fetch_markets_chart(exchanges=matched_exchanges,
+    #                                                                  timeframe=coin.timeframe,
+    #                                                                  stamps=coin.stamps)))
+    #     result = await asyncio.gather(*tasks)
+    #     _ = [response.extend(l) for l in result]
+    #
+    # return response
 
 
 @app.post("/update")

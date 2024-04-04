@@ -22,7 +22,7 @@ services:
       - .env
     ports:
       - "7352:7352"
-    command: uvicorn src.main:app --reload --host 0.0.0.0 --port 7352
+    command: gunicorn src.main:app --reload --workers 3 --worker-class uvicorn.workers.UvicornWorker --timeout 30 --bind 0.0.0.0:7352
 
   redis:
     build:
@@ -42,7 +42,9 @@ services:
     build:
       context: ./app/backend/app
       dockerfile: ./Dockerfile
-    command: celery -A src.worker worker --loglevel=INFO
+    volumes:
+      - ./app/celery:/app/celery
+    command: /bin/bash /app/celery/start_celery_task.sh
     env_file:
       - .env
     depends_on:

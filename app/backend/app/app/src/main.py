@@ -1,10 +1,9 @@
-import asyncio
-import os
-import time
+import logging
 
 import redis.asyncio as redis
 from redis.asyncio import Redis
 from fastapi import FastAPI, Depends
+from fastapi.logger import logger as fastapi_logger
 
 from contextlib import asynccontextmanager
 from loguru import logger as lg
@@ -12,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware.cors import CORSMiddleware
 
 from src.db.connection import get_db, engine, AsyncSessionFactory
-from src.worker import last_tickers_task, old_update_mapper_task
+from src.worker import old_update_mapper_task
 from src.api.routers import api_router
 from src.lib.schema import HistoricalRequest, HistoricalResponse, PriceResponse
 from src.deps.historical import HistoricalMarkets
@@ -30,13 +29,20 @@ from src.api.rest.historical import fetch_markets_chart
 #     async with AsyncSessionFactory() as session:
 #         await markets.load_markets(session=session)
 
+gunicorn_error_logger = logging.getLogger("gunicorn.error")
+gunicorn_logger = logging.getLogger("gunicorn")
+uvicorn_access_logger = logging.getLogger("uvicorn.access")
+uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
+
+fastapi_logger.handlers = gunicorn_error_logger.handlers
+fastapi_logger.setLevel(gunicorn_logger.level)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # global r
     # r = redis.Redis(host=os.getenv("REDIS_HOST"), port=int(os.environ.get("REDIS_PORT")), decode_responses=True)
-    last_tickers_task.apply_async()
-
+    lg.info("STARTUP")
     # loop = asyncio.get_running_loop()
     # asyncio.run_coroutine_threadsafe(get_markets(), loop)
 

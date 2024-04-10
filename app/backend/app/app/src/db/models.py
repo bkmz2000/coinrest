@@ -34,7 +34,7 @@ class Exchange(Base):
                                                           passive_deletes=True)
 
     def __str__(self):
-        return self.name
+        return self.ccxt_name
 
 
 class Ticker(Base):

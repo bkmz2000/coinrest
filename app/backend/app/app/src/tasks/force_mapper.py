@@ -11,6 +11,8 @@ from src.db.cruds import crud_exchange
 async def update_mapper():
     """
         Updates tickers/coingecko ids for all exchanges for all tickers
+        Fast mapper, only to initialize the table 'exchange_tickers_mapper'
+        For further work using update_coingecko_mapper
     :return:
     """
     lg.info("Updating mapper")

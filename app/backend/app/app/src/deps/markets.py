@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime
 from typing import Literal
 
@@ -13,6 +14,8 @@ from src.lib.schema import TickerInfo
 from src.strapi_sync.strapi import update_strapi_state
 from src.db import crud
 
+
+IS_DEV = os.environ.get("IS_DEV", False)
 
 important_field = {
     "map": 'last',
@@ -168,5 +171,7 @@ class Market:
         if tickers:
             async with AsyncSessionFactory() as session:
                 await crud.save_tickers(session=session, tickers=tickers)
+            if IS_DEV:
+                return
             event = UpdateEventTo(ticker_num=len(tickers), last_update=str(datetime.now()))
             await update_strapi_state(self.exchange.id, event)

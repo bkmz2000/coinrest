@@ -14,6 +14,9 @@ from src.lib import schema
 
 
 async def get_cg_mapper(session: AsyncSession, exchange_id: str) -> dict[str, str]:
+    """
+        For current exchange get all mapped symbols to coingecko ids
+    """
     stmt = (select(ExchangeMapper.cg_id, ExchangeMapper.symbol, Exchange.ccxt_name)
             .join(Exchange, Exchange.id == ExchangeMapper.exchange_id)
             .where(Exchange.id == ExchangeMapper.exchange_id)
@@ -30,6 +33,9 @@ async def get_cg_mapper(session: AsyncSession, exchange_id: str) -> dict[str, st
 
 
 async def get_exchange_mapper(session: AsyncSession, exchange_ids: list[str]) -> list[utils.BaseMapper]:
+    """
+        Get all mapping info (symbol, coingecko_id) for a given exchange ids
+    """
     stmt = (select(ExchangeMapper.cg_id, ExchangeMapper.symbol, Exchange.ccxt_name)
             .join(Exchange, Exchange.id == ExchangeMapper.exchange_id)
             .where(Exchange.id == ExchangeMapper.exchange_id)
@@ -43,6 +49,9 @@ async def get_exchange_mapper(session: AsyncSession, exchange_ids: list[str]) ->
 
 
 async def update_quote_mapper(session: AsyncSession, rates: list[utils.QuoteRate]):
+    """
+        Update quote currencies
+    """
     rates_list = [dict(currency=rate.currency, rate=rate.rate, update_at=rate.update_at) for rate in rates]
     stmt = insert(QuoteMapper).values(rates_list)
     update = stmt.on_conflict_do_update(
@@ -122,8 +131,6 @@ async def save_matched_tickers(session: AsyncSession, tickers: list[utils.Ticker
     ticker_list = [ticker.model_dump() for ticker in tickers]
     await session.execute(update(Ticker), ticker_list)
     await session.commit()
-
-
 
 
 async def main():

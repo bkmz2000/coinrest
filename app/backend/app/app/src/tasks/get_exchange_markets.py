@@ -32,7 +32,11 @@ async def get_price_and_volume(ex: str):
             lg.info(f"{market.exchange_name} normalize {len(normalized_tickers)} tickers")
             await market.save_tickers(normalized_tickers)
     except Exception as e:
-        lg.error(e.with_traceback(traceback.print_exc(100, sys.stdout)))
+        err_msg = str(e)
+        if "_abort" in err_msg:
+            lg.warning(e)  # Library specific error when fails releasing resources
+        else:
+            lg.error(e.with_traceback(traceback.print_exc(100, sys.stdout)))
 
 
 if __name__ == "__main__":

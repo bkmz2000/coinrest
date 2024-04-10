@@ -1,14 +1,19 @@
 import asyncio
+import os
+from loguru import logger as lg
+
 from src.celery_app import app
 from src.tasks.calculate_total_markets import main as calculate_last_price
 from src.tasks.update_coingecko_mapper import main as update_mapper
-from src.tasks.mapper import main as old_update_mapper
+from src.tasks.force_mapper import main as old_update_mapper
 from src.tasks.update_quote_rates import main as update_quote_currency
 from src.tasks.get_exchange_markets import main as last_tickers
 from src.tasks.strapi_sync import main as strapi_sync
 from src.tasks.update_actual_coin_ids import main as update_coingecko_actual
 from src.tasks.get_coingecko_markets import main as gecko_markets
 
+
+IS_DEV = os.environ.get("IS_DEV", False)
 
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -19,12 +24,17 @@ def setup_periodic_tasks(sender, **kwargs):
 
     sender.add_periodic_task(43200.0, update_mapper_task.s(), name="Update mapper for all exchanges")
     sender.add_periodic_task(300.0, update_coingecko_actual_task.s(), name="Update list of actual coingecko coins")
-    sender.add_periodic_task(300.0, gecko_markets_task.s(), name="Get market data from coingecko")
+    if not IS_DEV:
+        sender.add_periodic_task(300.0, gecko_markets_task.s(), name="Get market data from coingecko")
 
 
-@app.task()
-def last_tickers_task():
-    asyncio.run(last_tickers())
+@app.task(bind=True, default_retry_delay=30)
+def last_tickers_task(self):
+    try:
+        asyncio.run(last_tickers())
+    except Exception as e:
+        lg.error(e)
+        raise self.retry(exc=e, countdown=30)
 
 
 @app.task(time_limit=290)

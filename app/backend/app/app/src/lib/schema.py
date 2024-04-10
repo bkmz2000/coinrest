@@ -54,6 +54,14 @@ class ExchangeResponse(BaseModel):
     cg_identifier: str
 
 
+class TopExchangeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    trust_score: int
+    volume_24h: float
+
+
 class StrapiMarket(BaseModel):
     name: str
     trust_score: int | None

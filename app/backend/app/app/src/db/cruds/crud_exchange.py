@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text, update, null, bindparam
 from loguru import logger as lg
 
-from src.db.models import Exchange, ExchangeMapper
-from src.lib.schema import ExchangeResponse, StrapiMarket, ExchangeNameResponse
+from src.db.models import Exchange, ExchangeMapper, Ticker
+from src.lib.schema import ExchangeResponse, StrapiMarket, ExchangeNameResponse, TopExchangeResponse
 
 
 class ExchangeCRUD:
@@ -49,3 +49,37 @@ class ExchangeCRUD:
         )
         await session.execute(update)
         await session.commit()
+
+    async def get_top_exchanges(self, session: AsyncSession, limit: int) -> list[TopExchangeResponse]:
+        top_trust = (
+            select(Exchange.trust_score)
+            .where(Exchange.trust_score.is_not(null()))
+            .order_by(Exchange.trust_score.desc())
+            .limit(limit+10)  # +10 reserve for exchanges without tickers
+        ).subquery()
+        top_trust_distinct = select(top_trust).distinct().scalar_subquery()
+
+        max_trust_exs = select(Exchange.id, Exchange.trust_score, Exchange.full_name).where(
+            Exchange.trust_score.in_(top_trust_distinct)).subquery()
+
+        exs_with_top_volume = (
+            select(
+                max_trust_exs.c.full_name.label("name"),
+                max_trust_exs.c.trust_score,
+                func.sum(Ticker.volume_usd).label("volume_24h"),
+            )
+            .join(
+                Ticker, Ticker.exchange_id == max_trust_exs.c.id
+            )
+            .group_by(
+                max_trust_exs.c.full_name,
+                max_trust_exs.c.trust_score
+            ).order_by(
+                max_trust_exs.c.trust_score.desc(),
+                func.sum(Ticker.volume_usd).desc()
+            ).limit(limit))
+
+        result = await session.execute(exs_with_top_volume)
+        result = result.mappings()
+        result = [TopExchangeResponse.model_validate(exchange) for exchange in result]
+        return result

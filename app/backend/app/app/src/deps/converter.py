@@ -99,6 +99,9 @@ class Converter:
             return
 
         base, quote = symbol.split("/")
+        if base.endswith("3L") or base.endswith("3S"):
+            return
+
         usd_quote = self._quote_to_usd(quote)
         usd_base_price = usd_quote * base_price
         volume_usd = self._get_quote_volume_usd(usd_quote, quote_volume)

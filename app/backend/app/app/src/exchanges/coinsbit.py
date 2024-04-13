@@ -43,8 +43,8 @@ class coinsbit:
             symbol = self._convert_symbol_to_ccxt(symbol)
             normalized_data[symbol] = {
                 "last": float(ticker.get("last", 0)),
-                "baseVolume": 0,
-                "quoteVolume": float(ticker.get("deal", 0))
+                "baseVolume": float(ticker.get("vol", 0)),
+                "quoteVolume": 0
             }
         return normalized_data
 

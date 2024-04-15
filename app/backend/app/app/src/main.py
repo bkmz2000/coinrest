@@ -9,7 +9,7 @@ from starlette.middleware.cors import CORSMiddleware
 from src.db.connection import get_db, engine
 from src.worker import old_update_mapper_task
 from src.api.routers import api_router
-from src.lib.schema import HistoricalRequest, HistoricalResponse, PriceResponse
+from src.lib.schema import HistoricalRequest, HistoricalResponse, PriceResponse, NewHistoricalRequest
 from sqladmin import Admin
 from src.admin import views
 from src.api.rest.last_prices import get_coins
@@ -48,6 +48,11 @@ async def coins(session: AsyncSession = Depends(get_db)):
 
 @app.post("/api/coins/historical", response_model=list[HistoricalResponse])
 async def coins_historical(coins: list[HistoricalRequest], session: AsyncSession = Depends(get_db)):
+    return []
+
+
+@app.post("/api/v2/coins/historical", response_model=list[HistoricalResponse])
+async def coins_historical(coins: list[NewHistoricalRequest], session: AsyncSession = Depends(get_db)):
     crud = HistoricalCRUD()
     return await crud.get_data(session=session, coins=coins)
 

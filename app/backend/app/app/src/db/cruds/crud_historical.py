@@ -11,7 +11,7 @@ from loguru import logger as lg
 from src.lib import schema
 from src.db.connection import AsyncSessionFactory
 from src.db.models import Historical
-from src.lib.schema import ExchangeNameResponse, HistoricalResponse, HistoricalRequest
+from src.lib.schema import HistoricalResponse, NewHistoricalRequest
 from src.lib.utils import HistoricalDT
 
 
@@ -24,7 +24,7 @@ class HistoricalCRUD:
         await session.execute(do_nothing)
         await session.commit()
 
-    async def get_data(self, session: AsyncSession, coins: list[HistoricalRequest]) -> list[HistoricalResponse]:
+    async def get_data(self, session: AsyncSession, coins: list[NewHistoricalRequest]) -> list[HistoricalResponse]:
         stmt = select(Historical.cg_id,
                       Historical.price_usd.label("price"),
                       Historical.volume_usd.label("volume"),
@@ -33,7 +33,7 @@ class HistoricalCRUD:
                       Historical.timestamp.label("stamp"))
         conditions = []
         for coin in coins:
-            condition = (Historical.cg_id == coin.cg_id) & Historical.timestamp.in_(coin.stamps)
+            condition = (Historical.cg_id == coin.cg_id) & (Historical.timestamp == coin.stamp)
             conditions.append(condition)
         stmt = stmt.where(or_(*conditions)).limit(120000)
         result = await session.execute(stmt)

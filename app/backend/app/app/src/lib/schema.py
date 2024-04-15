@@ -30,8 +30,6 @@ class CoinOutput(BaseModel):
     volume_btc: float | None
 
 
-
-
 class TickerResponse(BaseModel):
     name: str | None
     base: str
@@ -104,6 +102,12 @@ class HistoricalRequest(BaseModel):
     cg_id: str
     timeframe: Literal['5m', '1h', '1d']
     stamps: list[int]
+
+
+class NewHistoricalRequest(BaseModel):
+    cg_id: str
+    timeframe: Literal['5m', '1h', '1d']
+    stamp: int
 
 
 class HistoricalResponse(BaseModel):

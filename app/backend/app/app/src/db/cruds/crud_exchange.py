@@ -83,3 +83,9 @@ class ExchangeCRUD:
         result = result.mappings()
         result = [TopExchangeResponse.model_validate(exchange) for exchange in result]
         return result
+
+    async def get_most_trusted(self, session: AsyncSession) -> list[str]:
+        stmt = select(Exchange.ccxt_name).where(Exchange.trust_score > 5)
+        result = await session.execute(stmt)
+        result = result.scalars().all()
+        return result

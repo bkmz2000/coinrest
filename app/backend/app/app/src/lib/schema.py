@@ -110,6 +110,9 @@ class HistoricalResponse(BaseModel):
     cg_id: str
     stamp: int
     price: float
+    price_btc: float | None = None
+    volume: float | None = None
+    volume_btc: float | None = None
 
 # {
 #   "event": "entry.update",

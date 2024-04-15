@@ -141,6 +141,44 @@ ALTER SEQUENCE public.exchange_tickers_mapper_id_seq OWNED BY public.exchange_ti
 
 
 --
+-- Name: historical; Type: TABLE; Schema: public; Owner: exchange
+--
+
+CREATE TABLE public.historical (
+    id bigint NOT NULL,
+    cg_id text,
+    price_usd numeric,
+    volume_usd numeric,
+    price_btc numeric,
+    volume_btc numeric,
+    "timestamp" bigint
+);
+
+
+ALTER TABLE public.historical OWNER TO exchange;
+
+--
+-- Name: historical_id_seq; Type: SEQUENCE; Schema: public; Owner: exchange
+--
+
+CREATE SEQUENCE public.historical_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.historical_id_seq OWNER TO exchange;
+
+--
+-- Name: historical_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: exchange
+--
+
+ALTER SEQUENCE public.historical_id_seq OWNED BY public.historical.id;
+
+
+--
 -- Name: last; Type: TABLE; Schema: public; Owner: exchange
 --
 
@@ -287,6 +325,13 @@ ALTER TABLE ONLY public.exchange_tickers_mapper ALTER COLUMN id SET DEFAULT next
 
 
 --
+-- Name: historical id; Type: DEFAULT; Schema: public; Owner: exchange
+--
+
+ALTER TABLE ONLY public.historical ALTER COLUMN id SET DEFAULT nextval('public.historical_id_seq'::regclass);
+
+
+--
 -- Name: last id; Type: DEFAULT; Schema: public; Owner: exchange
 --
 
@@ -361,6 +406,22 @@ ALTER TABLE ONLY public.exchange_tickers_mapper
 
 ALTER TABLE ONLY public.exchange
     ADD CONSTRAINT exchnages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: historical gecko_stamp_unique; Type: CONSTRAINT; Schema: public; Owner: exchange
+--
+
+ALTER TABLE ONLY public.historical
+    ADD CONSTRAINT gecko_stamp_unique UNIQUE (cg_id, "timestamp");
+
+
+--
+-- Name: historical historical_pkey; Type: CONSTRAINT; Schema: public; Owner: exchange
+--
+
+ALTER TABLE ONLY public.historical
+    ADD CONSTRAINT historical_pkey PRIMARY KEY (id);
 
 
 --

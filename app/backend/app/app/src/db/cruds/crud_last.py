@@ -16,7 +16,7 @@ class LastCRUD:
         CRUD operations for last prices
     """
 
-    async def get_coins_from_db(self, session: AsyncSession):
+    async def get_coins_from_db(self, session: AsyncSession) -> list[utils.Last]:
         """
             Get all last prices for every coin.
         """

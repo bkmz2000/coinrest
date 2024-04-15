@@ -11,11 +11,12 @@ from src.lib.schema import TickerResponse, MarketResponse
 
 
 class TickerCRUD:
-    async def get_tickers(self, session: AsyncSession):
-        stmt = select(Ticker.base_cg).distinct()
+    async def get_tickers(self, session: AsyncSession, limit: int, offset: int) -> list[str]:
+        stmt = select(Ticker.base_cg).group_by(Ticker.base_cg).order_by(func.sum(Ticker.volume_usd).desc()).limit(limit).offset(offset)
         result = await session.execute(stmt)
-        result = result.mappings()
-        return [dict(res) for res in result]
+        result = result.scalars().all()
+
+        return result
 
     async def get_ticker_by_exchange(self, session: AsyncSession, exchange_name: str):
         stmt = (

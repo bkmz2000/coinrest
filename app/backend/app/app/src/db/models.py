@@ -92,3 +92,17 @@ class ActualCoingecko(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     cg_id: Mapped[str]
+
+
+class Historical(Base):
+    __tablename__ = 'historical'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    cg_id: Mapped[str]
+    price_usd: Mapped[float]
+    volume_usd: Mapped[float]
+    price_btc: Mapped[float]
+    volume_btc: Mapped[float]
+    timestamp: Mapped[int]
+
+    __table_args__ = (UniqueConstraint("cg_id", "timestamp", name="gecko_stamp_unique"),)

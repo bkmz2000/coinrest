@@ -10,33 +10,43 @@ from src.db.connection import AsyncSessionFactory
 from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
 from src.db.crud import get_exchange_mapper
+from src.db.cruds.crud_exchange import ExchangeCRUD
 from src.lib.utils import Match
 
 
 class HistoricalMarkets:
     def __init__(self, exchange_names: list[str] | None = None):
         self.mapper = HistoricalMapper()
-        # self.exchanges = []
         self.exchanges = {}
+        self.trusted_exchanges = []
         # self.exchanges_matched = {}
-        self.total = 0
 
         if exchange_names is None:
             from ccxt import exchanges
-            exchange_names = exchanges
+            self.exchange_names = exchanges
+        else:
+            self.exchange_names = exchange_names
 
-        for exchange_name in exchange_names:
-            exchange: BaseExchange = getattr(ccxt, exchange_name)()
-            if exchange.has["fetchOHLCV"]:
-                self.exchanges[exchange.id] = exchange
-                # self.exchanges.append(exchange)
-                self.total += 1
+    async def _get_trusted_exchanges(self, session: AsyncSession):
+        """
+            Get exchanges with trust score > 5
+        """
+        crud = ExchangeCRUD()
+        return await crud.get_most_trusted(session=session)
 
     async def load_markets(self, session: AsyncSession):
+        trusted_exchanges = await self._get_trusted_exchanges(session=session)
+        for exchange_name in self.exchange_names:
+            if exchange_name in trusted_exchanges:  # check exchange is trusted
+                exchange: BaseExchange = getattr(ccxt, exchange_name)()
+                if exchange.has["fetchOHLCV"]:  # check exchange can fetch historical data
+                    self.exchanges[exchange.id] = exchange
+        await self.mapper.load_mapper(exchanges=self.exchanges, session=session)
+
         lg.info("Start loading markets")
         await asyncio.gather(*[self._load_markets(exchange) for exchange in self.exchanges.values()])
-        lg.info(f"Historical markets loaded: {len(self.exchanges)}/{self.total}")
-        await self.mapper.load_mapper(exchanges=self.exchanges, session=session)
+        lg.info(f"Historical markets loaded: {len(self.exchanges)}/{len(self.trusted_exchanges)}")
+
 
     async def _load_markets(self, exchange: BaseExchange):
         """Load all market data from exchange"""
@@ -83,12 +93,8 @@ class HistoricalMapper:
 
     def __getitem__(self, item: str) -> list[Match] | None:
         mapped_markets = self.mapper.get(item)
-        if item == "tether":
-            return mapped_markets
-        if mapped_markets and len(mapped_markets) > 6:
-            mapped_markets = random.sample(mapped_markets, k=6)
-        elif mapped_markets and len(mapped_markets) < 3:
-            return None
+        if mapped_markets and len(mapped_markets) >= 4:
+            mapped_markets = random.sample(mapped_markets, k=4)
         return mapped_markets
 
 

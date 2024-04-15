@@ -94,6 +94,14 @@ class ActualCoinIn:
     cg_id: str
 
 
+@dataclass
+class HistoricalDT:
+    cg_id: str
+    price_usd: float
+    timestamp: int
+    volume_usd: float | None = None
+
+
 def repeat_forever(func):
     """
         Restart func every 5 minutes/

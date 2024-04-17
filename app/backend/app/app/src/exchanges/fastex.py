@@ -1,14 +1,15 @@
 import aiohttp
-from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class fastex:
+class fastex(BaseExchange):
     """
         docs: https://exchange.fastex.com/api/documentation#tag/public/paths/~1stats~1marketdepth/get
     """
     def __init__(self):
         self.id = 'fastex'
+        self.cg_id = "fastex"
+        self.full_name = "Fastex"
         self.base_url = "http://exchange.fastex.com/api/v1/"
         self.markets = {}
 

@@ -32,23 +32,29 @@ def get_exchanges_data(exchanges: list) -> list[StrapiMarket]:
     to_update = []
     for ex in exchanges:
         attrs = ex.get('attributes', {})
+        url = ''
         if attrs:
             img = attrs.get('logo', {}).get('data')
             if img:
                 url = base_url + img[0].get('attributes', {}).get('url')
-                to_update.append(
-                    StrapiMarket(
-                        name=attrs.get('name'),
-                        trust_score=attrs.get('trust_score'),
-                        logo=url
-                    )
-                )
+
+        to_update.append(
+            StrapiMarket(
+                ccxt_name=attrs.get('name'),
+                cg_identifier=attrs.get('cg_identifier'),
+                full_name=attrs.get('full_name'),
+                trust_score=attrs.get('trust_score'),
+                centralized=attrs.get('centralized'),
+                logo=url,
+                is_active=attrs.get('is_active'),
+            )
+        )
     return to_update
 
 
 async def main():
     """
-        Synchronize strapi exchanges data with local DB (trust_score, image path)
+        Synchronize strapi exchanges data with local DB (trust_score, image path, is_active)
     """
     lg.info("Start synchronizing with strapi")
     exchanges = await get_strapi_exchanges()

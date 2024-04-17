@@ -1,14 +1,16 @@
 import aiohttp
-from ccxt.async_support.base.exchange import BaseExchange
+from src.exchanges.base import BaseExchange
 from loguru import logger as lg
 
 
-class tapbit:
+class tapbit(BaseExchange):
     """
         docs: https://www.tapbit.com/openapi-docs/spot/public/ticker_list/
     """
     def __init__(self):
         self.id = 'tapbit'
+        self.cg_id = "tapbit"
+        self.full_name = "Tapbit"
         self.base_url = "https://openapi.tapbit.com/"
         self.markets = {}  # not really needed, just a stub
 

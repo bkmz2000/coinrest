@@ -1,14 +1,16 @@
 import aiohttp
-from ccxt.async_support.base.exchange import BaseExchange
+from src.exchanges.base import BaseExchange
 from loguru import logger as lg
 
 
-class tidex:
+class tidex(BaseExchange):
     """
         docs: https://tidex.gitbook.io/api/trading/public/list-of-public-tickers
     """
     def __init__(self):
         self.id = 'tidex'
+        self.cg_id = "tidex"
+        self.full_name = "Tidex"
         self.base_url = "https://api.tidex.com/api/v1/"
         self.markets = {}  # not really needed, just a stub
 

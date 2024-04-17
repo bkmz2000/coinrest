@@ -1,13 +1,15 @@
 import aiohttp
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class coinw:
+class coinw(BaseExchange):
     """
         docs: https://www.coinw.com/front/API
     """
     def __init__(self):
         self.id = 'coinw'
+        self.cg_id = "coinw"
+        self.full_name = "CoinW"
         self.base_url = "https://api.coinw.com/api/v1/"
         self.markets = {}  # not really needed, just a stub
 

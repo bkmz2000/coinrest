@@ -1,13 +1,16 @@
 import aiohttp
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
 
-class biconomy:
+class biconomy(BaseExchange):
     """
         docs: https://github.com/BiconomyOfficial/apidocs?tab=readme-ov-file#Getting-Started
     """
     def __init__(self):
         self.id = 'biconomy'
+        self.cg_id = "biconomy"
+        self.full_name = "Biconomy"
         self.base_url = "https://www.biconomy.com/"
         self.markets = {}  # not really needed, just a stub
 

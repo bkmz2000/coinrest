@@ -1,14 +1,16 @@
 import aiohttp
 from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class cointrpro:
+class cointrpro(BaseExchange):
     """
         docs: https://cointr-ex.github.io/openapis/spot.html#market-snapshot
     """
     def __init__(self):
         self.id = 'cointrpro'
+        self.cg_id = "cointr"
+        self.full_name = "CoinTR Pro"
         self.base_url = "https://api.cointr.pro/"
         self.markets = {}
 

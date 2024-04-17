@@ -20,7 +20,7 @@ async def main():
                 if mapped:
                     await ex.save_mappings(session=session, exchange_id=exchange.id, mapped=mapped)
             except Exception as e:
-                lg.error(f"{exchange} {e}")
+                lg.warning(f"{exchange} {e}")
     lg.info("New mapper updated")
 
 
@@ -63,7 +63,7 @@ async def _fetch_data(url: str):
                 data = await resp.json()
             else:
                 data = {}
-                lg.error(resp)
+                lg.warning(resp)
     return data
 
 if __name__ == '__main__':

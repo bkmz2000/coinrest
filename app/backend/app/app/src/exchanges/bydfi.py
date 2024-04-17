@@ -1,13 +1,15 @@
 import aiohttp
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class bydfi:
+class bydfi(BaseExchange):
     """
         docs: https://bydficryptoexchange.github.io/apidoc/docs/zh/futures/spot-api.html
     """
     def __init__(self):
         self.id = 'bydfi'
+        self.cg_id = "bydfi"
+        self.full_name = "BYDFi"
         self.base_url = "https://bydfi.com/"
         self.markets = {}  # not really needed, just a stub
 

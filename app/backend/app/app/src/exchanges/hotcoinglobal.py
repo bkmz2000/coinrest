@@ -1,15 +1,16 @@
 import aiohttp
 # from aiohttp_proxy import ProxyConnector, ProxyType
-from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class hotcoinglobal:
+class hotcoinglobal(BaseExchange):
     """
         docs: https://hotcoinex.github.io/en/spot/market.html
     """
     def __init__(self):
         self.id = 'hotcoinglobal'
+        self.cg_id = "hotcoin_global"
+        self.full_name = "Hotcoin Global"
         self.base_url = "https://api.hotcoinfin.com/"
         self.markets = {}  # not really needed, just a stub
 

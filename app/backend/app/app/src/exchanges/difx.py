@@ -1,13 +1,15 @@
 import aiohttp
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class difx:
+class difx(BaseExchange):
     """
         docs: https://api-docs.difx.com/#d7c5576d-04c4-47ce-b739-7562d98d7abc
     """
     def __init__(self):
         self.id = 'difx'
+        self.cg_id = "difx"
+        self.full_name = "DIFX"
         self.base_url = "https://api-v2.difx.com/"
         self.markets = {}  # not really needed, just a stub
 

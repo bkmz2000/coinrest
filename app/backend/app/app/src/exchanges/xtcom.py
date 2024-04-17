@@ -1,14 +1,16 @@
 import aiohttp
-from ccxt.async_support.base.exchange import BaseExchange
+from src.exchanges.base import BaseExchange
 from loguru import logger as lg
 
 
-class xtcom:
+class xtcom(BaseExchange):
     """
         docs: https://doc.xt.com/#market10ticker24h
     """
     def __init__(self):
         self.id = 'xtcom'
+        self.cg_id = "xt"
+        self.full_name = "XT.COM"
         self.base_url = "https://sapi.xt.com/"
         self.markets = {}  # not really needed, just a stub
 

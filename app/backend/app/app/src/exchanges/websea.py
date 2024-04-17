@@ -1,13 +1,16 @@
 import aiohttp
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
 
-class websea:
+class websea(BaseExchange):
     """
         docs: https://webseaex.github.io/en/spot-market/24kline-list/
     """
     def __init__(self):
         self.id = 'websea'
+        self.cg_id = "websea"
+        self.full_name = "Websea"
         self.base_url = "https://oapi.websea.com/"
         self.markets = {}  # not really needed, just a stub
 

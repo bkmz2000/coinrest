@@ -1,15 +1,17 @@
 import aiohttp
 # from aiohttp_proxy import ProxyConnector, ProxyType
-# from ccxt.async_support.base.exchange import BaseExchange
+from src.exchanges.base import BaseExchange
 from loguru import logger as lg
 
 
-class bullish:
+class bullish(BaseExchange):
     """
         docs: https://api.exchange.bullish.com/docs/api/rest/trading-api/v2/#get-/markets/-symbol-/tick
     """
     def __init__(self):
         self.id = 'bullish'
+        self.cg_id = "bullish_com"
+        self.full_name = "Bullish"
         self.base_url = "https://api.exchange.bullish.com/"
         self.markets = {}
 

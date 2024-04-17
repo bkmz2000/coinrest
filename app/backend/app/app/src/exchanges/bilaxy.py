@@ -1,13 +1,15 @@
 import aiohttp
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class bilaxy:
+class bilaxy(BaseExchange):
     """
         docs: https://github.com/bilaxy-exchange/bilaxy-api-docs/blob/master/restapi.md
     """
     def __init__(self):
         self.id = 'bilaxy'
+        self.cg_id = "bilaxy"
+        self.full_name = "Bilaxy"
         self.base_url = "https://newapi.bilaxy.com/"
         self.markets = {}  # not really needed, just a stub
 

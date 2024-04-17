@@ -1,14 +1,15 @@
 import aiohttp
-from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class deepcoin:
+class deepcoin(BaseExchange):
     """
         docs: https://www.deepcoin.com/en/docs#deepcoin-market-tickers
     """
     def __init__(self):
         self.id = 'deepcoin'
+        self.cg_id = "deepcoin"
+        self.full_name = "Deepcoin"
         self.base_url = "https://api.deepcoin.com/deepcoin/"
         self.markets = {}  # not really needed, just a stub
 

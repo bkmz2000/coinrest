@@ -101,6 +101,15 @@ class HistoricalDT:
     timestamp: int
     volume_usd: float | None = None
 
+class NotActiveExchange(Exception):
+    ...
+
+@dataclass
+class CreateExchange:
+    ccxt_name: str
+    full_name: str
+    cg_identifier: str
+
 
 def repeat_forever(func):
     """

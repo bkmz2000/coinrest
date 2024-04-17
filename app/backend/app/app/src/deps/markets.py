@@ -8,8 +8,9 @@ import src.exchanges as my_exchanges
 from loguru import logger as lg
 
 from src.db.connection import AsyncSessionFactory
+from src.db.cruds.crud_exchange import ExchangeCRUD
 from src.deps.converter import Converter
-from src.lib.utils import UpdateEventTo
+from src.lib.utils import UpdateEventTo, NotActiveExchange
 from src.lib.schema import TickerInfo
 from src.strapi_sync.strapi import update_strapi_state
 from src.db import crud
@@ -31,6 +32,7 @@ class Market:
         self.fetch_timeout = None
 
     async def __aenter__(self):
+        # Load exchange class
         try:
             self.exchange = getattr(ccxt, self.exchange_name)()
         except AttributeError:
@@ -39,13 +41,21 @@ class Market:
             except AttributeError:
                 raise AttributeError(f"{self.exchange_name} not supported")
 
-        self._init_fetch_timeout()
-        await self._load_markets()
-
-        self.converter = Converter(exchange=self.exchange)
+        # Check exchange is_actual, if not raise
         async with AsyncSessionFactory() as session:
+            ex_crud = ExchangeCRUD()
+            is_active = await ex_crud.check_is_active(session, self.exchange_name)
+            if not is_active:
+                raise NotActiveExchange(f"{self.exchange_name} Exchange was disabled")
+
+            # Load markets for all exchanges
+            self._init_fetch_timeout()
+            await self._load_markets()
+
+            # Init converter
+            self.converter = Converter(exchange=self.exchange)
             await self.converter.init_converter(session=session)
-        lg.info(f"{self.exchange.id} Initialized")
+            lg.info(f"{self.exchange.id} Initialized")
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):

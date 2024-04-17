@@ -61,9 +61,13 @@ class TopExchangeResponse(BaseModel):
 
 
 class StrapiMarket(BaseModel):
-    name: str
+    ccxt_name: str
+    cg_identifier: str | None
+    centralized: bool | None
     trust_score: int | None
     logo: str | None
+    is_active: bool | None
+    full_name: str | None
 
 
 class MarketMapping(BaseModel):

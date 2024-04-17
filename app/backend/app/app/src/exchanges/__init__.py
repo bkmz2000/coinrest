@@ -19,4 +19,30 @@ from src.exchanges.bilaxy import bilaxy
 from src.exchanges.difx import difx
 from src.exchanges.bydfi import bydfi
 from src.exchanges.bitmake import bitmake
+from src.exchanges.stormgain import stormgain
 
+
+custom_exchanges = [
+    'orangex',
+    'toobit',
+    'coinw',
+    'xtcom',
+    'deepcoin',
+    'cointrpro',
+    'hotcoinglobal',
+    'pionex',
+    'bullish',
+    'tapbit',
+    'nami_exchange',
+    'coinsbit',
+    'websea',
+    'fastex',
+    'tidex',
+    'btc_alpha',
+    'biconomy',
+    'bilaxy',
+    'difx',
+    'bydfi',
+    'bitmake',
+    'stormgain',
+]

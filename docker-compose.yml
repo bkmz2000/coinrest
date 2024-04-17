@@ -25,7 +25,7 @@ services:
       - .env
     ports:
       - "7352:7352"
-    command: gunicorn src.main:app --reload --workers 3 --worker-class uvicorn.workers.UvicornWorker --timeout 30 --bind 0.0.0.0:7352
+    command: bash -c "alembic upgrade head && gunicorn src.main:app --reload --workers 3 --worker-class uvicorn.workers.UvicornWorker --timeout 30 --bind 0.0.0.0:7352"
 
   redis:
     build:

@@ -1,13 +1,15 @@
 import aiohttp
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class bitmake:
+class bitmake(BaseExchange):
     """
         docs: https://docs.bitmake.com/#get-summary
     """
     def __init__(self):
         self.id = 'bitmake'
+        self.cg_id = "bitmake"
+        self.full_name = "BitMake"
         self.base_url = "https://api.bitmake.com/"
         self.markets = {}  # not really needed, just a stub
 

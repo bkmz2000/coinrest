@@ -21,7 +21,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: actual_coingecko; Type: TABLE; Schema: public; Owner: exchange
+-- Name: actual_coingecko; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.actual_coingecko (
@@ -30,10 +30,8 @@ CREATE TABLE public.actual_coingecko (
 );
 
 
-ALTER TABLE public.actual_coingecko OWNER TO exchange;
-
 --
--- Name: actual_coingecko_id_seq; Type: SEQUENCE; Schema: public; Owner: exchange
+-- Name: actual_coingecko_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.actual_coingecko_id_seq
@@ -45,17 +43,15 @@ CREATE SEQUENCE public.actual_coingecko_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.actual_coingecko_id_seq OWNER TO exchange;
-
 --
--- Name: actual_coingecko_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: exchange
+-- Name: actual_coingecko_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.actual_coingecko_id_seq OWNED BY public.actual_coingecko.id;
 
 
 --
--- Name: alembic_version; Type: TABLE; Schema: public; Owner: exchange
+-- Name: alembic_version; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.alembic_version (
@@ -63,10 +59,8 @@ CREATE TABLE public.alembic_version (
 );
 
 
-ALTER TABLE public.alembic_version OWNER TO exchange;
-
 --
--- Name: exchange; Type: TABLE; Schema: public; Owner: exchange
+-- Name: exchange; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.exchange (
@@ -76,14 +70,13 @@ CREATE TABLE public.exchange (
     full_name text,
     trust_score smallint,
     centralized boolean,
-    logo text
+    logo text,
+    is_active boolean DEFAULT true
 );
 
 
-ALTER TABLE public.exchange OWNER TO exchange;
-
 --
--- Name: exchange_id_seq; Type: SEQUENCE; Schema: public; Owner: exchange
+-- Name: exchange_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.exchange_id_seq
@@ -95,17 +88,15 @@ CREATE SEQUENCE public.exchange_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.exchange_id_seq OWNER TO exchange;
-
 --
--- Name: exchange_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: exchange
+-- Name: exchange_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.exchange_id_seq OWNED BY public.exchange.id;
 
 
 --
--- Name: exchange_tickers_mapper; Type: TABLE; Schema: public; Owner: exchange
+-- Name: exchange_tickers_mapper; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.exchange_tickers_mapper (
@@ -117,10 +108,8 @@ CREATE TABLE public.exchange_tickers_mapper (
 );
 
 
-ALTER TABLE public.exchange_tickers_mapper OWNER TO exchange;
-
 --
--- Name: exchange_tickers_mapper_id_seq; Type: SEQUENCE; Schema: public; Owner: exchange
+-- Name: exchange_tickers_mapper_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.exchange_tickers_mapper_id_seq
@@ -131,17 +120,15 @@ CREATE SEQUENCE public.exchange_tickers_mapper_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.exchange_tickers_mapper_id_seq OWNER TO exchange;
-
 --
--- Name: exchange_tickers_mapper_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: exchange
+-- Name: exchange_tickers_mapper_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.exchange_tickers_mapper_id_seq OWNED BY public.exchange_tickers_mapper.id;
 
 
 --
--- Name: historical; Type: TABLE; Schema: public; Owner: exchange
+-- Name: historical; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.historical (
@@ -155,10 +142,8 @@ CREATE TABLE public.historical (
 );
 
 
-ALTER TABLE public.historical OWNER TO exchange;
-
 --
--- Name: historical_id_seq; Type: SEQUENCE; Schema: public; Owner: exchange
+-- Name: historical_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.historical_id_seq
@@ -169,17 +154,15 @@ CREATE SEQUENCE public.historical_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.historical_id_seq OWNER TO exchange;
-
 --
--- Name: historical_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: exchange
+-- Name: historical_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.historical_id_seq OWNED BY public.historical.id;
 
 
 --
--- Name: last; Type: TABLE; Schema: public; Owner: exchange
+-- Name: last; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.last (
@@ -193,10 +176,8 @@ CREATE TABLE public.last (
 );
 
 
-ALTER TABLE public.last OWNER TO exchange;
-
 --
--- Name: last_id_seq; Type: SEQUENCE; Schema: public; Owner: exchange
+-- Name: last_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.last_id_seq
@@ -208,17 +189,15 @@ CREATE SEQUENCE public.last_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.last_id_seq OWNER TO exchange;
-
 --
--- Name: last_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: exchange
+-- Name: last_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.last_id_seq OWNED BY public.last.id;
 
 
 --
--- Name: quote_converter; Type: TABLE; Schema: public; Owner: exchange
+-- Name: quote_converter; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.quote_converter (
@@ -229,17 +208,15 @@ CREATE TABLE public.quote_converter (
 );
 
 
-ALTER TABLE public.quote_converter OWNER TO exchange;
-
 --
--- Name: TABLE quote_converter; Type: COMMENT; Schema: public; Owner: exchange
+-- Name: TABLE quote_converter; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON TABLE public.quote_converter IS 'Table for mapping quote currencies to USD';
 
 
 --
--- Name: quote_converter_id_seq; Type: SEQUENCE; Schema: public; Owner: exchange
+-- Name: quote_converter_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.quote_converter_id_seq
@@ -251,17 +228,15 @@ CREATE SEQUENCE public.quote_converter_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.quote_converter_id_seq OWNER TO exchange;
-
 --
--- Name: quote_converter_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: exchange
+-- Name: quote_converter_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.quote_converter_id_seq OWNED BY public.quote_converter.id;
 
 
 --
--- Name: ticker; Type: TABLE; Schema: public; Owner: exchange
+-- Name: ticker; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.ticker (
@@ -280,10 +255,8 @@ CREATE TABLE public.ticker (
 );
 
 
-ALTER TABLE public.ticker OWNER TO exchange;
-
 --
--- Name: ticker_id_seq; Type: SEQUENCE; Schema: public; Owner: exchange
+-- Name: ticker_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.ticker_id_seq
@@ -294,66 +267,64 @@ CREATE SEQUENCE public.ticker_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.ticker_id_seq OWNER TO exchange;
-
 --
--- Name: ticker_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: exchange
+-- Name: ticker_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.ticker_id_seq OWNED BY public.ticker.id;
 
 
 --
--- Name: actual_coingecko id; Type: DEFAULT; Schema: public; Owner: exchange
+-- Name: actual_coingecko id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.actual_coingecko ALTER COLUMN id SET DEFAULT nextval('public.actual_coingecko_id_seq'::regclass);
 
 
 --
--- Name: exchange id; Type: DEFAULT; Schema: public; Owner: exchange
+-- Name: exchange id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.exchange ALTER COLUMN id SET DEFAULT nextval('public.exchange_id_seq'::regclass);
 
 
 --
--- Name: exchange_tickers_mapper id; Type: DEFAULT; Schema: public; Owner: exchange
+-- Name: exchange_tickers_mapper id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.exchange_tickers_mapper ALTER COLUMN id SET DEFAULT nextval('public.exchange_tickers_mapper_id_seq'::regclass);
 
 
 --
--- Name: historical id; Type: DEFAULT; Schema: public; Owner: exchange
+-- Name: historical id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.historical ALTER COLUMN id SET DEFAULT nextval('public.historical_id_seq'::regclass);
 
 
 --
--- Name: last id; Type: DEFAULT; Schema: public; Owner: exchange
+-- Name: last id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.last ALTER COLUMN id SET DEFAULT nextval('public.last_id_seq'::regclass);
 
 
 --
--- Name: quote_converter id; Type: DEFAULT; Schema: public; Owner: exchange
+-- Name: quote_converter id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.quote_converter ALTER COLUMN id SET DEFAULT nextval('public.quote_converter_id_seq'::regclass);
 
 
 --
--- Name: ticker id; Type: DEFAULT; Schema: public; Owner: exchange
+-- Name: ticker id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ticker ALTER COLUMN id SET DEFAULT nextval('public.ticker_id_seq'::regclass);
 
 
 --
--- Name: actual_coingecko actual_coingecko_pkey; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: actual_coingecko actual_coingecko_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.actual_coingecko
@@ -361,7 +332,7 @@ ALTER TABLE ONLY public.actual_coingecko
 
 
 --
--- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.alembic_version
@@ -369,7 +340,7 @@ ALTER TABLE ONLY public.alembic_version
 
 
 --
--- Name: last cg_id_unique; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: last cg_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.last
@@ -377,7 +348,7 @@ ALTER TABLE ONLY public.last
 
 
 --
--- Name: quote_converter currency; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: quote_converter currency; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.quote_converter
@@ -385,7 +356,7 @@ ALTER TABLE ONLY public.quote_converter
 
 
 --
--- Name: exchange_tickers_mapper exchange_symbol_unique; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: exchange_tickers_mapper exchange_symbol_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.exchange_tickers_mapper
@@ -393,7 +364,7 @@ ALTER TABLE ONLY public.exchange_tickers_mapper
 
 
 --
--- Name: exchange_tickers_mapper exchange_tickers_mapper_pkey; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: exchange_tickers_mapper exchange_tickers_mapper_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.exchange_tickers_mapper
@@ -401,7 +372,7 @@ ALTER TABLE ONLY public.exchange_tickers_mapper
 
 
 --
--- Name: exchange exchnages_pkey; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: exchange exchnages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.exchange
@@ -409,7 +380,7 @@ ALTER TABLE ONLY public.exchange
 
 
 --
--- Name: historical gecko_stamp_unique; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: historical gecko_stamp_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.historical
@@ -417,7 +388,7 @@ ALTER TABLE ONLY public.historical
 
 
 --
--- Name: historical historical_pkey; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: historical historical_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.historical
@@ -425,7 +396,7 @@ ALTER TABLE ONLY public.historical
 
 
 --
--- Name: last last_pkey; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: last last_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.last
@@ -433,7 +404,7 @@ ALTER TABLE ONLY public.last
 
 
 --
--- Name: quote_converter quote_mapper_pkey; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: quote_converter quote_mapper_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.quote_converter
@@ -441,7 +412,7 @@ ALTER TABLE ONLY public.quote_converter
 
 
 --
--- Name: ticker ticker_pkey; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: ticker ticker_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ticker
@@ -449,15 +420,15 @@ ALTER TABLE ONLY public.ticker
 
 
 --
--- Name: exchange unique_exchnage_cg_id; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: exchange unique_exchange_name; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.exchange
-    ADD CONSTRAINT unique_exchnage_cg_id UNIQUE (cg_identifier);
+    ADD CONSTRAINT unique_exchange_name UNIQUE (ccxt_name);
 
 
 --
--- Name: ticker unique_ticker; Type: CONSTRAINT; Schema: public; Owner: exchange
+-- Name: ticker unique_ticker; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ticker
@@ -465,7 +436,7 @@ ALTER TABLE ONLY public.ticker
 
 
 --
--- Name: ticker exchange_fk; Type: FK CONSTRAINT; Schema: public; Owner: exchange
+-- Name: ticker exchange_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.ticker

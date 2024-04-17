@@ -1,14 +1,15 @@
 import aiohttp
-from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class nami_exchange:
+class nami_exchange(BaseExchange):
     """
         docs: https://namiexchange.github.io/docs/#get-24hr-ticker-price
     """
     def __init__(self):
         self.id = 'nami_exchange'
+        self.cg_id = "nami_exchange"
+        self.full_name = "Nami.Exchange"
         self.base_url = "https://nami.exchange/api/v1.0/"
         self.markets = {}  # not really needed, just a stub
 

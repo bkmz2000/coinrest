@@ -1,13 +1,15 @@
 import aiohttp
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class coinsbit:
+class coinsbit(BaseExchange):
     """
         docs: https://coinsbitwsapi.notion.site/API-COINSBIT-WS-API-COINSBIT-cf1044cff30646d49a0bab0e28f27a87
     """
     def __init__(self):
         self.id = 'coinsbit'
+        self.cg_id = "coinsbit"
+        self.full_name = "Coinsbit"
         self.base_url = "https://coinsbit.io/api/v1/"
         self.markets = {}  # not really needed, just a stub
 

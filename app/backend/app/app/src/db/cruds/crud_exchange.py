@@ -1,4 +1,5 @@
 import datetime
+from dataclasses import asdict
 
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +8,7 @@ from loguru import logger as lg
 
 from src.db.models import Exchange, ExchangeMapper, Ticker
 from src.lib.schema import ExchangeResponse, StrapiMarket, ExchangeNameResponse, TopExchangeResponse
+from src.lib import utils
 
 
 class ExchangeCRUD:
@@ -29,22 +31,31 @@ class ExchangeCRUD:
         return result
 
     async def update_many(self, session: AsyncSession, exchanges: list[StrapiMarket]):
-        conn = await session.connection()
-        await conn.execute(
-            update(Exchange).where(Exchange.ccxt_name == bindparam("name")),
-            [ex.model_dump() for ex in exchanges]
+        stmt = insert(Exchange).values([ex.model_dump() for ex in exchanges])
+        do_update = stmt.on_conflict_do_update(
+            index_elements=[Exchange.ccxt_name],
+            set_=dict(
+                cg_identifier=stmt.excluded.cg_identifier,
+                centralized=stmt.excluded.centralized,
+                trust_score=stmt.excluded.trust_score,
+                logo=stmt.excluded.logo,
+                is_active=stmt.excluded.is_active,
+                full_name=stmt.excluded.full_name
+            )
         )
+        await session.execute(do_update)
         await session.commit()
 
     async def save_mappings(self, session: AsyncSession, exchange_id: int, mapped: dict):
-        mapping_list = [dict(exchange_id=exchange_id, symbol=symbol, cg_id=gecko) for symbol, gecko in mapped.items()]
+        now = datetime.datetime.now()
+        mapping_list = [dict(exchange_id=exchange_id, symbol=symbol, cg_id=gecko, updated_at=now) for symbol, gecko in mapped.items()]
         stmt = insert(ExchangeMapper).values(mapping_list)
         update = stmt.on_conflict_do_update(
             index_elements=[ExchangeMapper.exchange_id, ExchangeMapper.symbol],
             set_=dict(
                 symbol=stmt.excluded.symbol,
                 cg_id=stmt.excluded.cg_id,
-                updated_at=datetime.datetime.now()
+                updated_at=now
             )
         )
         await session.execute(update)
@@ -89,3 +100,20 @@ class ExchangeCRUD:
         result = await session.execute(stmt)
         result = result.scalars().all()
         return result
+
+    async def get_all_exchanges(self, session: AsyncSession) -> list[str]:
+        stmt = select(Exchange.ccxt_name)
+        result = await session.execute(stmt)
+        result = result.scalars().all()
+        return result
+
+    async def check_is_active(self, session: AsyncSession, ex_name: str):
+        stmt = select(Exchange).where(Exchange.ccxt_name == ex_name).where(Exchange.is_active == True)
+        result = await session.execute(stmt)
+        result = result.scalar_one_or_none()
+        return result
+
+    async def create(self, session: AsyncSession, exchange: utils.CreateExchange):
+        await session.execute(insert(Exchange).values(asdict(exchange)))
+        await session.commit()
+        lg.info(f"New exchange {exchange.ccxt_name} created in db")

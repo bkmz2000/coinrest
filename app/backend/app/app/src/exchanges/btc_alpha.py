@@ -2,16 +2,17 @@ import os
 
 import aiohttp
 from aiohttp_proxy import ProxyConnector, ProxyType
-from ccxt.async_support.base.exchange import BaseExchange
 from loguru import logger as lg
+from src.exchanges.base import BaseExchange
 
-
-class btc_alpha:
+class btc_alpha(BaseExchange):
     """
         docs: https://btc-alpha.github.io/api-docs/#list-all-pairs
     """
     def __init__(self):
         self.id = 'btc_alpha'
+        self.cg_id = "btc_alpha"
+        self.full_name = "BTC-Alpha"
         self.base_url = "https://btc-alpha.com/"
         self.markets = {}  # not really needed, just a stub
 

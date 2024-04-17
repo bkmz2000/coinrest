@@ -1,14 +1,16 @@
 import aiohttp
-from ccxt.async_support.base.exchange import BaseExchange
+from src.exchanges.base import BaseExchange
 from loguru import logger as lg
 
 
-class orangex:
+class orangex(BaseExchange):
     """
         docs: https://openapi-docs.orangex.com/#spot-summary
     """
     def __init__(self):
         self.id = 'orangex'
+        self.cg_id = "orangex"
+        self.full_name = "OrangeX"
         self.base_url = "https://api.orangex.com/api/v1/public/"
         self.markets = {}  # not really needed, just a stub
 

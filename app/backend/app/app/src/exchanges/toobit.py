@@ -1,14 +1,16 @@
 import aiohttp
-from ccxt.async_support.base.exchange import BaseExchange
+from src.exchanges.base import BaseExchange
 from loguru import logger as lg
 
 
-class toobit:
+class toobit(BaseExchange):
     """
         docs: https://toobit-docs.github.io/apidocs/spot/v1/en/#24hr-ticker-price-change-statistics
     """
     def __init__(self):
         self.id = 'toobit'
+        self.cg_id = "toobit"
+        self.full_name = "Toobit"
         self.base_url = "https://api.toobit.com/"
         self.markets = {}
 

@@ -24,7 +24,7 @@ quote_mapper = {
     "VNST": "vnst-stablecoin"
 }
 
-active_exchanges = (
+active_ccxt_exchanges = [
     'ace',
     'alpaca',
     'ascendex',
@@ -111,33 +111,7 @@ active_exchanges = (
     'yobit',
     'zaif',
     'zonda',
-
-    'cointrpro',
-    'coinw',
-    'deepcoin',
-    'hotcoinglobal',
-    'orangex',
-    'toobit',
-    'xtcom',
-
-    'tapbit',
-    'pionex',
-    'bullish',
-
-    'websea',
-    'biconomy',
-    'fastex',
-    'nami_exchange',
-    'coinsbit',
-    'tidex',
-    'btc_alpha',
-    'bilaxy',
-    'difx',
-    'bydfi',
-
-    'bitmake',
-
-)
+]
 
 quotes = ['CRO', 'LA', 'TRX', 'HIT', 'TESTUSDT', 'EUTF0', 'BVND', 'USDCBSC', 'BIDR', 'PZM', 'USDT', 'DGLD', 'TWD',
           'PLN', 'UST', 'USDTBSC', 'BGN', 'CAD', 'ZAR', 'UAHG', 'ETH', 'USDCAVALANCHE', 'BYN', 'CNHT', 'BRL', 'GEL',

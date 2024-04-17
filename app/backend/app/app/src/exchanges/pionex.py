@@ -1,14 +1,16 @@
 import aiohttp
-from ccxt.async_support.base.exchange import BaseExchange
+from src.exchanges.base import BaseExchange
 from loguru import logger as lg
 
 
-class pionex:
+class pionex(BaseExchange):
     """
         docs: https://pionex-doc.gitbook.io/apidocs/restful/markets/get-24hr-ticker
     """
     def __init__(self):
         self.id = 'pionex'
+        self.cg_id = "pionex"
+        self.full_name = "Pionex"
         self.base_url = "https://api.pionex.com/"
         self.markets = {}  # not really needed, just a stub
 

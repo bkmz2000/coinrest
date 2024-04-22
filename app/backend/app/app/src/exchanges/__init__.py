@@ -20,29 +20,45 @@ from src.exchanges.difx import difx
 from src.exchanges.bydfi import bydfi
 from src.exchanges.bitmake import bitmake
 from src.exchanges.stormgain import stormgain
+from src.exchanges.cryptal import cryptal
+from src.exchanges.xeggex import xeggex
+from src.exchanges.nonkyc import nonkyc
+from src.exchanges.korbit import korbit
+from src.exchanges.backpack import backpack
+from src.exchanges.fameex import fameex
+from src.exchanges.onetradin import onetrading
+from src.exchanges.bitstorage import bitstorage
 
 
 custom_exchanges = [
-    'orangex',
-    'toobit',
-    'coinw',
-    'xtcom',
-    'deepcoin',
-    'cointrpro',
-    'hotcoinglobal',
-    'pionex',
-    'bullish',
-    'tapbit',
-    'nami_exchange',
-    'coinsbit',
-    'websea',
-    'fastex',
-    'tidex',
-    'btc_alpha',
-    'biconomy',
-    'bilaxy',
-    'difx',
-    'bydfi',
-    'bitmake',
-    'stormgain',
+    "bitstorage",
+    "onetrading",
+    "fameex",
+    "backpack",
+    "korbit",
+    "nonkyc",
+    "xeggex",
+    "cryptal",
+    "orangex",
+    "toobit",
+    "coinw",
+    "xtcom",
+    "deepcoin",
+    "cointrpro",
+    "hotcoinglobal",
+    "pionex",
+    "bullish",
+    "tapbit",
+    "nami_exchange",
+    "coinsbit",
+    "websea",
+    "fastex",
+    "tidex",
+    "btc_alpha",
+    "biconomy",
+    "bilaxy",
+    "difx",
+    "bydfi",
+    "bitmake",
+    "stormgain",
 ]

@@ -46,7 +46,7 @@ class Ticker(Base):
     __tablename__ = 'ticker'
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
-    exchange_id: Mapped[int] = mapped_column(SMALLINT, ForeignKey("exchange.id", ondelete="CASCADE"), nullable=True)
+    exchange_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("exchange.id", ondelete="CASCADE"), nullable=True)
     exchange: Mapped["Exchange"] = relationship(back_populates="ticker")
     base: Mapped[str] = mapped_column(TEXT, nullable=True)
     base_cg: Mapped[str] = mapped_column(TEXT, nullable=True)

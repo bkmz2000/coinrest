@@ -69,7 +69,7 @@ class ExchangeMapper(Base):
     __tablename__ = 'exchange_tickers_mapper'
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
-    exchange_id: Mapped[int] = mapped_column(SMALLINT, ForeignKey("exchange.id", ondelete="CASCADE"), nullable=True)
+    exchange_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("exchange.id", ondelete="CASCADE"), nullable=True)
     exchange: Mapped["Exchange"] = relationship(back_populates="exchange_tickers_mapper")
     symbol: Mapped[str] = mapped_column(TEXT, nullable=True)
     cg_id: Mapped[str] = mapped_column(TEXT, nullable=True)

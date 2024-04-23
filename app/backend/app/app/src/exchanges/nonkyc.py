@@ -1,7 +1,7 @@
 from src.exchanges.base import BaseExchange
 
 
-class nonkyc(BaseExchange):
+class nonkyc_io(BaseExchange):
     def __init__(self):
         self.id = "nonkyc_io"
         self.cg_id = "nonkyc_io"

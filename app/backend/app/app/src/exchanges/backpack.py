@@ -1,7 +1,7 @@
 from src.exchanges.base import BaseExchange
 
 
-class backpack(BaseExchange):
+class backpack_exchange(BaseExchange):
     def __init__(self):
         self.id = "backpack_exchange"
         self.cg_id = "backpack_exchange"

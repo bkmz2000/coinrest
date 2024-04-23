@@ -22,9 +22,9 @@ from src.exchanges.bitmake import bitmake
 from src.exchanges.stormgain import stormgain
 from src.exchanges.cryptal import cryptal
 from src.exchanges.xeggex import xeggex
-from src.exchanges.nonkyc import nonkyc
+from src.exchanges.nonkyc import nonkyc_io
 from src.exchanges.korbit import korbit
-from src.exchanges.backpack import backpack
+from src.exchanges.backpack import backpack_exchange
 from src.exchanges.fameex import fameex
 from src.exchanges.onetradin import onetrading
 from src.exchanges.bitstorage import bitstorage
@@ -34,9 +34,9 @@ custom_exchanges = [
     "bitstorage",
     "onetrading",
     "fameex",
-    "backpack",
+    "backpack_exchange",
     "korbit",
-    "nonkyc",
+    "nonkyc_io",
     "xeggex",
     "cryptal",
     "orangex",

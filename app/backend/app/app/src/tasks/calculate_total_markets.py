@@ -54,7 +54,7 @@ async def main():
                         volume_btc=np.divide(sum_volumes_usd, btc_coin.price_usd)
                     ))
                 except Exception as e:
-                    lg.warning(f"{e} {cg_id}")
+                    lg.warning(f"Coin weighted price calculation fails: {e} {cg_id}")
             # for coin in result:
             #     print(coin)
             await last_crud.save_last(session=session, coins=result)

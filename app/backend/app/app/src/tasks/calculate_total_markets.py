@@ -34,26 +34,27 @@ async def main():
             ))
 
             for cg_id, arrays in coins.items():
-                if cg_id == 'bitcoin':
-                    continue
-                # calculate z-score for every price
-                z = np.abs(stats.zscore(arrays.price))
-                # delete all outliers from prices and volumes arrays
-                clean_data_prices = np.delete(arrays.price, np.where(z >= 1))
-                clean_data_volumes = np.delete(arrays.volume, np.where(z >= 1))
-                # calculate weighted average
-                avg_price_usd = np.average(clean_data_prices, weights=clean_data_volumes)
-                # calculate sum of all volumes
-                sum_volumes_usd = np.sum(arrays.volume)
-
-                result.append(CoinOutput(
-                    cg_id=cg_id,
-                    price_usd=avg_price_usd,
-                    price_btc=np.divide(avg_price_usd, btc_coin.price_usd),
-                    volume_usd=sum_volumes_usd,
-                    volume_btc=np.divide(sum_volumes_usd, btc_coin.price_usd)
-                ))
-
+                try:
+                    if cg_id == 'bitcoin':
+                        continue
+                    # calculate z-score for every price
+                    z = np.abs(stats.zscore(arrays.price))
+                    # delete all outliers from prices and volumes arrays
+                    clean_data_prices = np.delete(arrays.price, np.where(z > 1))
+                    clean_data_volumes = np.delete(arrays.volume, np.where(z > 1))
+                    # calculate weighted average
+                    avg_price_usd = np.average(clean_data_prices, weights=clean_data_volumes)
+                    # calculate sum of all volumes
+                    sum_volumes_usd = np.sum(arrays.volume)
+                    result.append(CoinOutput(
+                        cg_id=cg_id,
+                        price_usd=avg_price_usd,
+                        price_btc=np.divide(avg_price_usd, btc_coin.price_usd),
+                        volume_usd=sum_volumes_usd,
+                        volume_btc=np.divide(sum_volumes_usd, btc_coin.price_usd)
+                    ))
+                except Exception as e:
+                    lg.warning(f"{e} {cg_id}")
             # for coin in result:
             #     print(coin)
             await last_crud.save_last(session=session, coins=result)

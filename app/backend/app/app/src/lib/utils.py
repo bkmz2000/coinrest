@@ -89,6 +89,12 @@ class QuoteRate(BaseModel):
     update_at: datetime.datetime | None = None
 
 
+class CoinWithPrice(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    cg_id: str
+    price_usd: float
+
 @dataclass
 class ActualCoinIn:
     cg_id: str

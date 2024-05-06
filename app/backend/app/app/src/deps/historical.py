@@ -45,7 +45,7 @@ class HistoricalMarkets:
 
         lg.info("Start loading markets")
         await asyncio.gather(*[self._load_markets(exchange) for exchange in self.exchanges.values()])
-        lg.info(f"Historical markets loaded: {len(self.exchanges)}/{len(self.trusted_exchanges)}")
+        lg.info(f"Historical markets loaded: {len(self.exchanges)}/{len(trusted_exchanges)}")
 
 
     async def _load_markets(self, exchange: BaseExchange):
@@ -60,7 +60,7 @@ class HistoricalMarkets:
             await asyncio.sleep(attempt + 1)
         else:
             await self._close_markets(exchange)
-            lg.error(f"{exchange.id} failed load markets :(")
+            lg.warning(f"{exchange.id} failed load markets :(")
             del self.exchanges[exchange.id]  # remove if markets unavailable
 
     async def close_markets(self) -> None:

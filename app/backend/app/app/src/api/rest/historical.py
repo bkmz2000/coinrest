@@ -10,17 +10,19 @@ from src.lib import schema
 
 
 async def fetch_markets_chart(exchanges: list[utils.Match],
-                              timeframe: Literal['5m', '1h', '1d']) -> list[utils.HistoricalDT] | None:
+                              timeframe: Literal['5m', '1h', '1d'],
+                              price: float) -> list[utils.HistoricalDT] | None:
 
-    result = await fetch_all_ohlcv(exchanges, timeframe)
+    result = await fetch_all_ohlcv(exchanges, timeframe, price)
     return result
 
 
 async def fetch_all_ohlcv(exchanges: list[utils.Match],
-                          timeframe: Literal['5m', '1h', '1d']) -> list[utils.HistoricalDT] | None:
+                          timeframe: Literal['5m', '1h', '1d'],
+                          price: float) -> list[utils.HistoricalDT] | None:
     result_list = []
     results = defaultdict(list)
-    tasks = [asyncio.create_task(fetch_ohlcv_loop(exchange, timeframe, results))
+    tasks = [asyncio.create_task(fetch_ohlcv_loop(exchange, timeframe, results, price))
              for exchange in exchanges]
     try:
         await _get_first_task(tasks, results)
@@ -41,7 +43,7 @@ async def fetch_all_ohlcv(exchanges: list[utils.Match],
 
 async def fetch_ohlcv_loop(match: utils.Match,
                            timeframe: Literal['5m', '1h', '1d'],
-                           results: dict):
+                           results: dict, price: float):
     if match.symbol == "USDT":
         ohlcvs = await match.exchange.fetch_ohlcv(match.symbol + "/USD", timeframe, limit=100)
     else:
@@ -49,7 +51,7 @@ async def fetch_ohlcv_loop(match: utils.Match,
     if ohlcvs:
         for ohlcv in ohlcvs:
             stamp = int(ohlcv[0]) // 1000
-            if ohlcv[4]:
+            if ohlcv[4] and _price_is_not_outlier(price, ohlcv[4]):
                 results[stamp].append(ohlcv[4])
     return results
 
@@ -91,3 +93,8 @@ async def _get_first_task(tasks: Iterable[asyncio.Task], results: dict):
         await gather
     except asyncio.CancelledError:
         pass
+
+def _price_is_not_outlier(market_price, price):
+    if 0.99 <= market_price <= 1.01:  # more strict for stable coins
+        return market_price * 0.996 <= price <= market_price * 1.004
+    return market_price * 0.85 <= price <= market_price * 1.15

@@ -3,6 +3,7 @@ import asyncio
 from loguru import logger as lg
 
 from src.api.rest.historical import fetch_markets_chart
+from src.db.cruds.crud_last import LastCRUD
 from src.deps.historical import HistoricalMarkets
 from src.db.connection import AsyncSessionFactory
 from src.db.cruds.crud_ticker import TickerCRUD
@@ -22,18 +23,18 @@ async def main(**kwargs):
         limit = 10000
     lg.info(f"Start updating historical data from exchanges OHLCV with limit: {limit}")
     async with AsyncSessionFactory() as session:
-        ticker_crud, historical_crud = TickerCRUD(), HistoricalCRUD()
-        coins = await ticker_crud.get_tickers(session=session, limit=limit, offset=offset)
+        last_crud, historical_crud = LastCRUD(), HistoricalCRUD()
+        coins = await last_crud.get_ids_with_prices(session=session, limit=limit, offset=offset)
         markets = HistoricalMarkets()
         await markets.load_markets(session=session)
         l = len(coins)
         for i, coin in enumerate(coins):
             lg.info(f"{coin} {i + 1}/{l}")
             result = []
-            mapped_market = markets.mapper[coin]
+            mapped_market = markets.mapper[coin.cg_id]
             if mapped_market:
                 try:
-                    result = await fetch_markets_chart(exchanges=mapped_market, timeframe="5m")
+                    result = await fetch_markets_chart(exchanges=mapped_market, timeframe="5m", price=coin.price_usd)
                 except Exception as e:
                     lg.warning(e)
                 if result:

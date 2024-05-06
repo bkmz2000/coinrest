@@ -68,13 +68,27 @@ class LastCRUD:
         result = [utils.LastLost.model_validate(res) for res in result]
         return result
 
+    async def get_ids_with_prices(self, session: AsyncSession, limit: int, offset: int) -> list[utils.CoinWithPrice]:
+        subq = select(Ticker.base_cg).select_from(Ticker).scalar_subquery()
+        stmt = (select(LastValues.cg_id, LastValues.price_usd)
+                .where(LastValues.cg_id.in_(subq))
+                .order_by(LastValues.volume_usd.desc())
+                .limit(limit)
+                .offset(offset)
+                )
+        result = await session.execute(stmt)
+        result = result.mappings()
+        result = [utils.CoinWithPrice.model_validate(res) for res in result]
+        return result
 
 async def main():
     from src.db.connection import AsyncSessionFactory
     async with AsyncSessionFactory() as session:
         crud = LastCRUD()
-        lost = await crud.get_lost_coins(session=session)
+        # lost = await crud.get_lost_coins(session=session)
+        lost = await crud.get_ids_with_prices(session=session, limit=10000, offset=0)
         print(lost)
+        print(len(lost))
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ annotated-types==0.6.0
 anyio==4.2.0
 attrs==23.2.0
 billiard==4.2.0
-ccxt==4.2.21
+ccxt==4.3.17
 celery==5.3.6
 certifi==2023.11.17
 cffi==1.16.0

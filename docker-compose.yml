@@ -27,6 +27,17 @@ services:
       - "7352:7352"
     command: bash -c "alembic upgrade head && gunicorn src.main:app --reload --workers 3 --worker-class uvicorn.workers.UvicornWorker --timeout 30 --bind 0.0.0.0:7352"
 
+  exchange:
+    build:
+      context: ./app/backend/app
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - .env
+    command: python src/tasks/get_exchange_markets.py
+
   redis:
     build:
       context: ./app/redis

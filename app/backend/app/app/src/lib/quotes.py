@@ -39,7 +39,6 @@ active_ccxt_exchanges = [
     'bitcoincom',
     'bitfinex',
     'bitflyer',
-    'bitforex',
     'bitget',
     'bithumb',
     'bitmart',

@@ -97,4 +97,4 @@ async def _get_first_task(tasks: Iterable[asyncio.Task], results: dict):
 def _price_is_not_outlier(market_price, price):
     if 0.99 <= market_price <= 1.01:  # more strict for stable coins
         return market_price * 0.996 <= price <= market_price * 1.004
-    return market_price * 0.85 <= price <= market_price * 1.15
+    return market_price * 0.96 <= price <= market_price * 1.04

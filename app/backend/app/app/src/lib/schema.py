@@ -122,6 +122,17 @@ class HistoricalResponse(BaseModel):
     volume: float | None = None
     volume_btc: float | None = None
 
+
+class NewCoinResponse(BaseModel):
+    cg_id: str | None
+    base: str
+    quote: str
+    on_create_id: str
+    created_at: int
+    exchange: str
+    new_for_market: bool
+    new_for_exchange: bool
+
 # {
 #   "event": "entry.update",
 #   "createdAt": "2020-01-10T08:58:26.563Z",

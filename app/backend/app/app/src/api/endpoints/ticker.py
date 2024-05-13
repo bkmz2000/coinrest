@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends
 from starlette import status
 from src.db import connection
 from src.db.cruds.crud_ticker import TickerCRUD
+from src.lib import schema
+from src.api.rest import last_prices
 
 router = APIRouter()
 
@@ -33,4 +35,12 @@ async def get_ticker(session: AsyncSession = Depends(connection.get_db)):
     ticker = TickerCRUD()
     result = await ticker.get_top_tickers(session=session)
     return result
+
+
+@router.get("/new", response_model=list[schema.NewCoinResponse])
+async def get_new_tickers(session: AsyncSession = Depends(connection.get_db)):
+    """
+        Get new tickers
+    """
+    return await last_prices.get_new_tickers(session=session)
 

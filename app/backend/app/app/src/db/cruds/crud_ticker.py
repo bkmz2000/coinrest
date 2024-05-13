@@ -8,7 +8,8 @@ from sqlalchemy import select, func, or_, null, union_all
 
 from src.db.models import Ticker, Exchange, QuoteMapper
 from src.lib import utils
-from src.lib.schema import TickerResponse, MarketResponse
+from src.lib.schema import TickerResponse, MarketResponse, NewCoinResponse
+from src.lib.utils import CoinWithPrice, CoinWithPriceAndDate
 
 
 class TickerCRUD:
@@ -227,4 +228,35 @@ class TickerCRUD:
                 )
         result = await session.execute(stmt)
         result = result.scalars().all()
+        return result
+
+    async def new(self, session: AsyncSession) -> list[utils.NewCoin]:
+        week = datetime.datetime.now() - datetime.timedelta(days=7)
+        stmt = (select(Ticker.base_cg.label("cg_id"),
+                       Exchange.ccxt_name.label("exchange"),
+                       Ticker.base,
+                       Ticker.quote,
+                       Ticker.price_usd,
+                       Ticker.on_create_id,
+                       Ticker.created_at)
+                .where(Ticker.on_create_id.is_not(null()))
+                .where(Ticker.created_at > week)
+                .where(Ticker.exchange_id == Exchange.id)
+                )
+
+        result = await session.execute(stmt)
+        result = result.mappings()
+        result = [utils.NewCoin.model_validate(res) for res in result]
+
+        return result
+
+    async def get_prices_by_symbol(self, session: AsyncSession, symbol: str):
+        unix_stamp_now = int(time.time()) - 10800  # 3 hours
+
+        stmt = ((select(Ticker.base_cg.label("cg_id"), Ticker.price_usd, Ticker.created_at)
+                .where(Ticker.base == symbol)
+                .where(Ticker.last_update > unix_stamp_now)))
+        result = await session.execute(stmt)
+        result = result.mappings()
+        result = [CoinWithPriceAndDate.model_validate(res) for res in result]
         return result

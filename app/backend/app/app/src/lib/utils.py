@@ -95,6 +95,19 @@ class CoinWithPrice(BaseModel):
     cg_id: str
     price_usd: float
 
+
+class CoinWithPriceAndDate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    cg_id: str | None
+    price_usd: float
+    created_at: int | None
+
+class LastCoinWithSymbol(BaseModel):
+    cg_id: str
+    base: str
+    price_usd: float
+
 @dataclass
 class ActualCoinIn:
     cg_id: str
@@ -115,6 +128,16 @@ class CreateExchange:
     ccxt_name: str
     full_name: str
     cg_identifier: str
+
+
+class NewCoin(BaseModel):
+    cg_id: str | None
+    base: str
+    quote: str
+    price_usd: float
+    exchange: str
+    on_create_id: str
+    created_at: int
 
 
 def repeat_forever(func):

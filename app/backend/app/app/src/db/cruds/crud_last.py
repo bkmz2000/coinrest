@@ -81,14 +81,22 @@ class LastCRUD:
         result = [utils.CoinWithPrice.model_validate(res) for res in result]
         return result
 
+    async def get_last_with_symbols(self, session: AsyncSession):
+        stmt = (select(LastValues.cg_id, Ticker.base, LastValues.price_usd)
+                .where(LastValues.cg_id == Ticker.base_cg))
+        result = await session.execute(stmt)
+        result = result.mappings()
+        result = [utils.LastCoinWithSymbol.model_validate(res) for res in result]
+        return result
+
 async def main():
     from src.db.connection import AsyncSessionFactory
     async with AsyncSessionFactory() as session:
         crud = LastCRUD()
         # lost = await crud.get_lost_coins(session=session)
-        lost = await crud.get_ids_with_prices(session=session, limit=10000, offset=0)
-        print(lost)
-        print(len(lost))
+        # lost = await crud.get_ids_with_prices(session=session, limit=10000, offset=0)
+        res = await crud.get_last_with_symbols(session)
+        print(res)
 
 
 if __name__ == "__main__":

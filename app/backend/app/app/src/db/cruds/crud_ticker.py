@@ -1,9 +1,10 @@
+import asyncio
 import datetime
 import time
 
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, or_, null
+from sqlalchemy import select, func, or_, null, union_all
 
 from src.db.models import Ticker, Exchange, QuoteMapper
 from src.lib import utils
@@ -181,24 +182,37 @@ class TickerCRUD:
         """
         Get all base ticker with their prices and volumes. And get all quote tickers with their volumes only
         """
-
         unix_stamp_now = int(time.time()) - 10800  # 3 hours
-        as_date = datetime.datetime.utcfromtimestamp(unix_stamp_now)
 
-        stmt = (
+        as_date = datetime.datetime.utcfromtimestamp(unix_stamp_now)
+        new_coins_date = as_date - datetime.timedelta(days=7)
+
+        base_cg_prices = (
             select(Ticker.base_cg.label("cg_id"), Ticker.price_usd.label("price_usd"), Ticker.volume_usd)
             .where(Ticker.base_cg.is_not(null()))
             .where(Ticker.price_usd > 0)
             .where(Ticker.volume_usd > 0)
             .where(Ticker.last_update > unix_stamp_now)
-        ).union_all(
+        )
+        quote_cg_prices = (
             select(Ticker.quote_cg.label("cg_id"), QuoteMapper.rate.label("price_usd"), Ticker.volume_usd)
             .where(Ticker.quote == QuoteMapper.currency)
             .where(QuoteMapper.update_at > as_date)
             .where(Ticker.quote_cg.is_not(null()))
             .where(Ticker.volume_usd > 0)
             .where(Ticker.last_update > unix_stamp_now)
-        ).order_by(Ticker.volume_usd.desc())
+        )
+        new_coins_prices = (
+            select(Ticker.on_create_id.label("cg_id"), Ticker.price_usd.label("price_usd"),
+                   Ticker.volume_usd)
+            .where(Ticker.base_cg.is_(null()))
+            .where(Ticker.price_usd > 0)
+            .where(Ticker.volume_usd > 0)
+            .where(Ticker.created_at > new_coins_date)
+        )
+        # stmt = union_all(new_coins_prices).order_by(Ticker.volume_usd.desc())
+        stmt = union_all(base_cg_prices, quote_cg_prices, new_coins_prices).order_by(Ticker.volume_usd.desc())
+
         result = await session.execute(stmt)
         result = result.mappings()
         result = [utils.TickerSimple.model_validate(res) for res in result]

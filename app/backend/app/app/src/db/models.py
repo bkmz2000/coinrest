@@ -1,12 +1,25 @@
 import datetime
 from typing import List
 
-from sqlalchemy import ForeignKey, UniqueConstraint, func, SMALLINT, BIGINT
+from sqlalchemy import ForeignKey, UniqueConstraint, func, SMALLINT, BIGINT, TypeDecorator, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.postgresql import NUMERIC, TEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 Base = declarative_base()
+
+
+class UnixTimestamp(TypeDecorator):
+    # convert unix timestamp to datetime object
+    impl = Integer
+    cache_ok = True
+
+    # convert datetime object to unix timestamp when inserting data to database
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            return int(value.timestamp())
+        else:
+            return None
 
 
 class QuoteMapper(Base):
@@ -18,6 +31,7 @@ class QuoteMapper(Base):
     update_at: Mapped[datetime.datetime] = mapped_column(nullable=True)
 
     __table_args__ = (UniqueConstraint("currency", name="currency"),)
+
 
 class Exchange(Base):
     __tablename__ = 'exchange'
@@ -33,8 +47,9 @@ class Exchange(Base):
 
     ticker: Mapped[List["Ticker"]] = relationship(back_populates="exchange", cascade="all, delete",
                                                   passive_deletes=True)
-    exchange_tickers_mapper: Mapped[List["ExchangeMapper"]] = relationship(back_populates="exchange", cascade="all, delete",
-                                                          passive_deletes=True)
+    exchange_tickers_mapper: Mapped[List["ExchangeMapper"]] = relationship(back_populates="exchange",
+                                                                           cascade="all, delete",
+                                                                           passive_deletes=True)
 
     __table_args__ = (UniqueConstraint("ccxt_name", name="unique_exchange_name"),)
 
@@ -58,6 +73,8 @@ class Ticker(Base):
     quote_volume: Mapped[float] = mapped_column(NUMERIC, nullable=True)
     volume_usd: Mapped[float] = mapped_column(NUMERIC, nullable=True)
     last_update: Mapped[int] = mapped_column(nullable=True)
+    on_create_id: Mapped[str] = mapped_column(TEXT, nullable=True)
+    created_at: Mapped[int] = mapped_column(UnixTimestamp, nullable=True, default=datetime.datetime.utcnow())
 
     __table_args__ = (UniqueConstraint("exchange_id", "base", "quote", name="unique_ticker"),)
 

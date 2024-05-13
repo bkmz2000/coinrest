@@ -96,7 +96,9 @@ async def save_tickers(session: AsyncSession, tickers: list[schema.TickerInfo]):
                         base_volume=ticker.base_volume,
                         quote_volume=ticker.quote_volume,
                         volume_usd=ticker.volume_usd,
-                        last_update=int(time.time())
+                        last_update=int(time.time()),
+                        on_create_id="hdlr-"+ticker.base.lower(),
+                        created_at=datetime.datetime.now()
                         ) for ticker in tickers]
     insert_stmt = insert(Ticker).values(ticker_list)
     update_stmt = insert_stmt.on_conflict_do_update(

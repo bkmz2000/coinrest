@@ -51,7 +51,7 @@ async def fetch_ohlcv_loop(match: utils.Match,
     if ohlcvs:
         for ohlcv in ohlcvs:
             stamp = int(ohlcv[0]) // 1000
-            if ohlcv[4] and _price_is_not_outlier(price, ohlcv[4]):
+            if ohlcv[4] and _price_is_not_outlier(match.symbol, price, ohlcv[4]):
                 results[stamp].append(ohlcv[4])
     return results
 
@@ -94,7 +94,10 @@ async def _get_first_task(tasks: Iterable[asyncio.Task], results: dict):
     except asyncio.CancelledError:
         pass
 
-def _price_is_not_outlier(market_price, price):
-    if 0.99 <= market_price <= 1.01:  # more strict for stable coins
+def _price_is_not_outlier(symbol, market_price, price):
+    if symbol == "USDT":  # very more strict for tether
+        return market_price * 0.9995 <= price <= market_price * 1.0005
+    if 0.96 <= market_price <= 1.04:  # more strict for stable coins
         return market_price * 0.996 <= price <= market_price * 1.004
-    return market_price * 0.96 <= price <= market_price * 1.04
+
+    return market_price * 0.97 <= price <= market_price * 1.03

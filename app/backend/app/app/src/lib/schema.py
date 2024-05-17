@@ -133,6 +133,29 @@ class NewCoinResponse(BaseModel):
     new_for_market: bool
     new_for_exchange: bool
 
+class Bid(BaseModel):
+    price: float
+    qty: float
+
+
+class Ask(BaseModel):
+    price: float
+    qty: float
+
+
+class DepthChart(BaseModel):
+    bids: list[Bid]
+    asks: list[Ask]
+
+
+class MarketDepthResponse(BaseModel):
+    exchange: str
+    symbol: str
+    coin_id: str
+    bids_volume: float
+    asks_volume: float
+    depth_chart: DepthChart
+
 # {
 #   "event": "entry.update",
 #   "createdAt": "2020-01-10T08:58:26.563Z",

@@ -1,11 +1,9 @@
 import asyncio
 import time
-from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from ccxt.async_support.base.exchange import BaseExchange
 import datetime
 from pydantic import BaseModel, ConfigDict
-from loguru import logger as lg
 
 @dataclass
 class Match:
@@ -138,6 +136,27 @@ class NewCoin(BaseModel):
     exchange: str
     on_create_id: str
     created_at: int
+
+
+class OrderBookCoin(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    cg_id: str
+    symbol: str
+
+
+class OrderBook(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    cg_id: str
+    base: str
+    quote: str
+    exchange: str
+    bids: list
+    asks: list
+
+class OrderBookFromDB(OrderBook):
+    last_price: float
 
 
 def repeat_forever(func):

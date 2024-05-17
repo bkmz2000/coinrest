@@ -3,7 +3,7 @@ from typing import List
 
 from sqlalchemy import ForeignKey, UniqueConstraint, func, SMALLINT, BIGINT, TypeDecorator, Integer
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.dialects.postgresql import NUMERIC, TEXT
+from sqlalchemy.dialects.postgresql import NUMERIC, TEXT, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 Base = declarative_base()
@@ -128,3 +128,32 @@ class Historical(Base):
     timestamp: Mapped[int] = mapped_column(BIGINT, nullable=True)
 
     __table_args__ = (UniqueConstraint("cg_id", "timestamp", name="gecko_stamp_unique"),)
+
+
+class TopVolume(Base):
+    __tablename__ = 'top_volume'
+
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
+    cg_id: Mapped[str] = mapped_column(TEXT, nullable=True)
+    base: Mapped[str] = mapped_column(TEXT, nullable=True)
+    quote: Mapped[str] = mapped_column(TEXT, nullable=True)
+    volume_usd: Mapped[float] = mapped_column(NUMERIC, nullable=True)
+    exchange: Mapped[str] = mapped_column(TEXT, nullable=True)
+    updated_at: Mapped[datetime.datetime] = mapped_column(nullable=True, server_default=func.now())
+
+    __table_args__ = (UniqueConstraint("cg_id", name="unique_coin_id"),)
+
+
+class OrderBook(Base):
+    __tablename__ = 'order_book'
+
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
+    cg_id: Mapped[str] = mapped_column(TEXT, nullable=True)
+    base: Mapped[str] = mapped_column(TEXT, nullable=True)
+    quote: Mapped[str] = mapped_column(TEXT, nullable=True)
+    exchange: Mapped[str] = mapped_column(TEXT, nullable=True)
+    bids = mapped_column(ARRAY(NUMERIC), nullable=True)
+    asks = mapped_column(ARRAY(NUMERIC), nullable=True)
+    updated_at: Mapped[int] = mapped_column(UnixTimestamp, nullable=True, default=datetime.datetime.utcnow())
+
+    __table_args__ = (UniqueConstraint("cg_id", name="order_book_unique_coin_id"),)

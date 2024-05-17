@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from loguru import logger as lg
 
 from src.db.connection import AsyncSessionFactory
-from src.db.models import ExchangeMapper, QuoteMapper, Ticker, Exchange, LastValues
+from src.db.models import ExchangeMapper, QuoteMapper, Ticker, Exchange, OrderBook
 from src.lib import utils
 from src.lib import schema
 
@@ -116,6 +116,37 @@ async def save_tickers(session: AsyncSession, tickers: list[schema.TickerInfo]):
     )
     await session.execute(update_stmt)
     await session.commit()
+
+
+async def save_orders(session: AsyncSession, orders: list[utils.OrderBook]):
+    orders_to_insert = [order.model_dump() for order in orders]
+    insert_stmt = insert(OrderBook).values(orders_to_insert)
+    update_stmt = insert_stmt.on_conflict_do_update(
+        index_elements=[OrderBook.cg_id],
+        set_=dict(
+            bids=insert_stmt.excluded.bids,
+            asks=insert_stmt.excluded.asks,
+            exchange=insert_stmt.excluded.exchange,
+            updated_at=datetime.datetime.utcnow()
+        )
+    )
+    await session.execute(update_stmt)
+    await session.commit()
+
+
+async def get_order_books(session: AsyncSession, cg_id: str) -> utils.OrderBookFromDB:
+    stmt = (select(OrderBook.cg_id, Ticker.price_usd.label("last_price"), OrderBook.base, OrderBook.quote, OrderBook.exchange, OrderBook.bids, OrderBook.asks)
+            .where(OrderBook.cg_id == cg_id)
+            .where(OrderBook.base == Ticker.base)
+            .where(OrderBook.quote == Ticker.quote)
+            .where(Ticker.exchange_id == Exchange.id)
+            .where(OrderBook.exchange == Exchange.ccxt_name)
+            )
+    result = await session.execute(stmt)
+    result = result.mappings()
+    result = [utils.OrderBookFromDB.model_validate(res) for res in result]
+    if result:
+        return result[0]
 
 
 async def get_db_tickers(session: AsyncSession) -> list[utils.TickerToMatch]:

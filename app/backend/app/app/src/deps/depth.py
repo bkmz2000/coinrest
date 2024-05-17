@@ -18,6 +18,7 @@ depth_limits = {
     "kucoin": 100,
     "binance": 5000,
     "poloniex": 150,
+    "coinone": 15,
 }
 
 class OrderBookMarket:
@@ -38,6 +39,7 @@ class OrderBookMarket:
                 raise AttributeError(f"{self.exchange_name} not supported")
         self.session = AsyncSessionFactory()
         await self._load_markets()
+        self._init_fetch_timeout()
         lg.info(f"{self.exchange.id} OrderBook Initialized")
         return self
 
@@ -63,6 +65,8 @@ class OrderBookMarket:
     def _init_fetch_timeout(self):
         if self.exchange.id == 'bitmart':
             self.exchange.fetch_timeout = 2
+        elif self.exchange.id == 'ascendex':
+            self.exchange.fetch_timeout = 5
         else:
             self.exchange.fetch_timeout = 0.3
 
@@ -81,6 +85,7 @@ class OrderBookMarket:
         try:
             for coin in orderbook_coins:
                 try:
+                    await asyncio.sleep(self.exchange.fetch_timeout)
                     result = await self.exchange.fetch_order_book(coin.symbol, limit=self.depth_limit)
                     base, quote = result["symbol"].split("/")
                     bids = [(bid[0], bid[1]) for bid in result["bids"]]

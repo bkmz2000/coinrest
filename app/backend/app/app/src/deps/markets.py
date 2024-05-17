@@ -174,6 +174,8 @@ class Market:
     def _init_fetch_timeout(self):
         if self.exchange.id == 'bitmart':
             self.exchange.fetch_timeout = 2
+        elif self.exchange.id == 'ascendex':
+            self.exchange.fetch_timeout = 5
         else:
             self.exchange.fetch_timeout = 0.3
 

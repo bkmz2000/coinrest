@@ -82,29 +82,31 @@ class OrderBookMarket:
 
     async def get_order_books(self, orderbook_coins: list[utils.OrderBookCoin]):
         orders = []
-        try:
-            for coin in orderbook_coins:
-                try:
-                    await asyncio.sleep(self.exchange.fetch_timeout)
-                    result = await self.exchange.fetch_order_book(coin.symbol, limit=self.depth_limit)
-                    base, quote = result["symbol"].split("/")
-                    bids = [(bid[0], bid[1]) for bid in result["bids"]]
-                    asks = [(ask[0], ask[1]) for ask in result["asks"]]
-                    orders.append(utils.OrderBook(
-                        cg_id=coin.cg_id,
-                        base=base,
-                        quote=quote,
-                        exchange=self.exchange.id,
-                        bids=bids,
-                        asks=asks
-                    ))
-                except BadSymbol as e:
-                    lg.warning(f"Bad symbol for {self.exchange_name} {coin.cg_id}: {e}")
-                except RateLimitExceeded as rle:
-                    lg.warning(f"Rate lime exceed {self.exchange_name} {rle}")
-                    await asyncio.sleep(5)
-        except AttributeError as ae:
-            lg.warning(f"{self.exchange.id} not support order book fetching: {ae}")
+        for coin in orderbook_coins:
+            try:
+                await asyncio.sleep(self.exchange.fetch_timeout)
+                result = await self.exchange.fetch_order_book(coin.symbol, limit=self.depth_limit)
+                base, quote = result["symbol"].split("/")
+                bids = [(bid[0], bid[1]) for bid in result["bids"]]
+                asks = [(ask[0], ask[1]) for ask in result["asks"]]
+                orders.append(utils.OrderBook(
+                    cg_id=coin.cg_id,
+                    base=base,
+                    quote=quote,
+                    exchange=self.exchange.id,
+                    bids=bids,
+                    asks=asks
+                ))
+            except AttributeError as ae:
+                lg.warning(f"{self.exchange.id} not support order book fetching: {ae}")
+                break
+            except BadSymbol as e:
+                lg.warning(f"Bad symbol for {self.exchange_name} {coin.cg_id}: {e}")
+            except RateLimitExceeded as rle:
+                lg.warning(f"Rate limit exceed {self.exchange_name} {rle}")
+                await asyncio.sleep(5)
+            except Exception as e:
+                lg.warning(f"{self.exchange.id} fetch order book failed {coin}: {e}")
         return orders
 
     async def save_order_books(self, orders: list[utils.OrderBook]) -> None:

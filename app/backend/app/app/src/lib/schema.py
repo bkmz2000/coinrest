@@ -156,6 +156,11 @@ class MarketDepthResponse(BaseModel):
     asks_volume: float
     depth_chart: DepthChart
 
+
+class MappedCoinResponse(BaseModel):
+    cg_id: str
+    base: str
+
 # {
 #   "event": "entry.update",
 #   "createdAt": "2020-01-10T08:58:26.563Z",

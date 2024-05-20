@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import time
+from collections import defaultdict
 
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +10,7 @@ from sqlalchemy import select, func, or_, null, union_all, text
 from src.db.connection import AsyncSessionFactory
 from src.db.models import Ticker, Exchange, QuoteMapper, TopVolume
 from src.lib import utils
-from src.lib.schema import TickerResponse, MarketResponse, NewCoinResponse
+from src.lib.schema import TickerResponse, MappedCoinResponse
 from src.lib.utils import CoinWithPrice, CoinWithPriceAndDate
 
 
@@ -180,7 +181,6 @@ class TickerCRUD:
             return stmt.order_by(Ticker.volume_usd.desc())
         return stmt
 
-
     async def get_all_tickers(self, session: AsyncSession) -> list[utils.TickerSimple]:
         """
         Get all base ticker with their prices and volumes. And get all quote tickers with their volumes only
@@ -256,8 +256,8 @@ class TickerCRUD:
         unix_stamp_now = int(time.time()) - 10800  # 3 hours
 
         stmt = ((select(Ticker.base_cg.label("cg_id"), Ticker.price_usd, Ticker.created_at)
-                .where(Ticker.base == symbol)
-                .where(Ticker.last_update > unix_stamp_now)))
+                 .where(Ticker.base == symbol)
+                 .where(Ticker.last_update > unix_stamp_now)))
         result = await session.execute(stmt)
         result = result.mappings()
         result = [CoinWithPriceAndDate.model_validate(res) for res in result]
@@ -341,6 +341,27 @@ class TickerCRUD:
         result = await session.execute(stmt)
         result = result.scalars().all()
         return result
+
+    async def get_mapper(self, session: AsyncSession, exchange_ids: list[str]) -> dict[str, list[MappedCoinResponse]]:
+        stmt = (
+            select(Ticker.base, Ticker.base_cg, Exchange.ccxt_name)
+            .where(Ticker.exchange_id == Exchange.id)
+            .where(Ticker.quote_cg == 'tether')
+            .where(Ticker.base_cg.is_not(null()))
+            .where(Exchange.ccxt_name.in_(exchange_ids))
+        )
+        result = await session.execute(stmt)
+        result = result.mappings()
+        exs_dict = defaultdict(list)
+        for res in result:
+            exs_dict[res["ccxt_name"]].append(MappedCoinResponse(
+                base=res["base"],
+                cg_id=res["base_cg"]
+            )
+
+            )
+        return exs_dict
+
 
 async def main():
     async with AsyncSessionFactory() as session:

@@ -44,3 +44,9 @@ async def get_new_tickers(session: AsyncSession = Depends(connection.get_db)):
     """
     return await last_prices.get_new_tickers(session=session)
 
+
+@router.get("/mapper", response_model=dict[str, list[schema.MappedCoinResponse]])
+async def get_ticker_mapper(exchange_ids: str, session: AsyncSession = Depends(connection.get_db)):
+    exs = exchange_ids.split(",")
+    ticker = TickerCRUD()
+    return await ticker.get_mapper(exchange_ids=exs, session=session)

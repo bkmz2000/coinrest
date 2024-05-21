@@ -95,7 +95,7 @@ async def _get_first_task(tasks: Iterable[asyncio.Task], results: dict):
         pass
 
 def _price_is_not_outlier(symbol, market_price, price):
-    if symbol == "USDT":  # very more strict for tether
+    if symbol in ("USDT", "USDC"):  # very more strict for tether, usdc
         return market_price * 0.9995 <= price <= market_price * 1.0005
     if 0.96 <= market_price <= 1.04:  # more strict for stable coins
         return market_price * 0.996 <= price <= market_price * 1.004

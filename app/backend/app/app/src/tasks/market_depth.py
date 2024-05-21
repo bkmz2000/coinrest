@@ -24,8 +24,9 @@ async def get_order_books(ex: str):
     try:
         async with OrderBookMarket(exchange_name=ex) as market:
             coins = await market.get_exchange_coins_for_orderbook()
-            orders = await market.get_order_books(coins)
-            await market.save_order_books(orders)
+            for i in range(0, len(coins), 20):
+                orders = await market.get_order_books(coins[i:i + 20])
+                await market.save_order_books(orders)
 
     except Exception as e:
         err_msg = str(e)

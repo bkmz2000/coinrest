@@ -39,7 +39,7 @@ def setup_periodic_tasks(sender, **kwargs):
     if not IS_DEV:
         sender.add_periodic_task(300.0, gecko_markets_task.s(), name="Get market data from coingecko")
     # Market depth
-    sender.add_periodic_task(1200.0, market_depth_chain_task.s(), name="Market depth calculation tasks chain")
+    sender.add_periodic_task(1500.0, market_depth_chain_task.s(), name="Market depth calculation tasks chain")
 
 @app.task(bind=True, default_retry_delay=30)
 def last_tickers_task(self):
@@ -115,6 +115,6 @@ def calculate_market_depth_task(*args, **kwargs):
     asyncio.run(market_depth())
 
 
-@app.task(time_limit=1550)
+@app.task(time_limit=1500)
 def market_depth_chain_task():
     chain(copy_top_volume_tickers_task.s(), calculate_market_depth_task.s())()

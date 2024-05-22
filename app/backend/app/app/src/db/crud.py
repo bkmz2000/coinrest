@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from loguru import logger as lg
 
 from src.db.connection import AsyncSessionFactory
-from src.db.models import ExchangeMapper, QuoteMapper, Ticker, Exchange, OrderBook
+from src.db.models import ExchangeMapper, QuoteMapper, Ticker, Exchange, OrderBook, LatestSocketUpdate
 from src.lib import utils
 from src.lib import schema
 
@@ -165,6 +165,20 @@ async def save_matched_tickers(session: AsyncSession, tickers: list[utils.Ticker
     await session.execute(update(Ticker), ticker_list)
     await session.commit()
 
+
+async def save_socket_last_info(session: AsyncSession, coins: list[utils.SocketUpdated]):
+    value_list = [coin.model_dump() for coin in coins]
+    insert_stmt = insert(LatestSocketUpdate).values(value_list)
+    update_stmt = insert_stmt.on_conflict_do_update(
+        index_elements=[LatestSocketUpdate.cg_id],
+        set_=dict(
+            price_usd=insert_stmt.excluded.price_usd,
+            exchange=insert_stmt.excluded.exchange,
+            updated_at=insert_stmt.excluded.updated_at
+        )
+    )
+    await session.execute(update_stmt)
+    await session.commit()
 
 async def main():
     ...

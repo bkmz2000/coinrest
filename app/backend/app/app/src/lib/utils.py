@@ -159,6 +159,13 @@ class OrderBookFromDB(OrderBook):
     last_price: float
 
 
+class SocketUpdated(BaseModel):
+    cg_id: str
+    exchange: str
+    price_usd: float
+    updated_at: datetime.datetime
+
+
 def repeat_forever(func):
     """
         Restart func every 5 minutes/

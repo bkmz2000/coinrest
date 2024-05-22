@@ -16,6 +16,7 @@ from src.tasks.update_historical_ohlc import main as historical_ohlc
 from src.tasks.update_historical_last import main as historical_last
 from src.tasks.top_volume_tickers import main as top_volume_tickers
 from src.tasks.market_depth import main as market_depth
+from src.tasks.socket_last import main as socket_watch
 
 
 IS_DEV = os.environ.get("IS_DEV", False)
@@ -27,10 +28,11 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(300.0, update_quote_currency_task.s(), name="Update quote currency rates")
     # sender.add_periodic_task(300.0, calculate_last_price_task.s(), name='Calculate actual last prices and 24_volumes') in chain
     sender.add_periodic_task(300.0, strapi_sync_task.s(), name="Sync strapi exchanges data with local db")
+    sender.add_periodic_task(250.0, soket_watching_task.s(), name="Socket watching task")
 
     # Historical tasks
     sender.add_periodic_task(1200.0, top_historical_task.s(), name="Update top historical data from exchanges ohlcv")
-    sender.add_periodic_task(9000.0, all_historical_task.s(), name="Update all historical data from exchanges ohlcv")
+    # sender.add_periodic_task(9000.0, all_historical_task.s(), name="Update all historical data from exchanges ohlcv")
     # sender.add_periodic_task(300.0, historical_last_task.s(), name="Update historical table from last values, delete old data") in chain
 
     # Coingecko tasks
@@ -118,3 +120,8 @@ def calculate_market_depth_task(*args, **kwargs):
 @app.task(time_limit=1500)
 def market_depth_chain_task():
     chain(copy_top_volume_tickers_task.s(), calculate_market_depth_task.s())()
+
+
+@app.task(time_limit=60)
+def soket_watching_task():
+    asyncio.run(socket_watch())

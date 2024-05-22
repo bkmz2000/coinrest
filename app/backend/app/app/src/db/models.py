@@ -157,3 +157,15 @@ class OrderBook(Base):
     updated_at: Mapped[int] = mapped_column(UnixTimestamp, nullable=True, default=datetime.datetime.utcnow())
 
     __table_args__ = (UniqueConstraint("cg_id", name="order_book_unique_coin_id"),)
+
+
+class LatestSocketUpdate(Base):
+    __tablename__ = 'latest_socket_update'
+
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
+    cg_id: Mapped[str] = mapped_column(TEXT, nullable=True)
+    price_usd: Mapped[float] = mapped_column(NUMERIC, nullable=True)
+    exchange: Mapped[str] = mapped_column(TEXT, nullable=True)
+    updated_at: Mapped[int] = mapped_column(UnixTimestamp, nullable=True, default=datetime.datetime.utcnow())
+
+    __table_args__ = (UniqueConstraint("cg_id", name="socket_update_unique_coin_id"),)

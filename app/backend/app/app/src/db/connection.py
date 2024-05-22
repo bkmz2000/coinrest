@@ -3,7 +3,7 @@ import os
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
 
 SQLALCHEMY_DATABASE_URL = os.environ.get("DB_URL")
-engine = create_async_engine(SQLALCHEMY_DATABASE_URL, future=True, pool_size=200, max_overflow=50)
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL, future=True, pool_size=300, max_overflow=50)
 
 AsyncSessionFactory = async_sessionmaker(engine, expire_on_commit=False)
 

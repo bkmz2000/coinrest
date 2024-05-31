@@ -7,7 +7,7 @@ from sqlalchemy import select, func, text, update, null, bindparam
 from loguru import logger as lg
 
 from src.db.models import Exchange, ExchangeMapper, Ticker
-from src.lib.schema import ExchangeResponse, StrapiMarket, ExchangeNameResponse, TopExchangeResponse
+from src.lib.schema import ExchangeResponse, StrapiMarket, ExchangeNameResponse, TopExchangeResponse, PairsResponse, ExchangePair, TickerResponse, TickerInfo
 from src.lib import utils
 
 
@@ -94,6 +94,35 @@ class ExchangeCRUD:
         result = result.mappings()
         result = [TopExchangeResponse.model_validate(exchange) for exchange in result]
         return result
+    
+    async def get_pairs(self, session: AsyncSession, exchange_name: str) -> PairsResponse:
+        id_req = select(Exchange.id).where(Exchange.ccxt_name == exchange_name)
+        exchange_id = (await session.execute(id_req)).scalar_one_or_none()
+
+        lg.debug(f"req = {str(id_req)} id = {exchange_id} end")
+
+        pairs_req = select(Ticker).where(Ticker.exchange_id == exchange_id)
+
+        result = await session.execute(pairs_req)
+        lines = result.scalars().all()
+
+        ex_pairs: list[ExchangePair] = []
+
+        for line in lines:
+            base = line.base
+            quote = line.quote
+            price = line.price
+            volume_usd = line.volume_usd
+            ex_pairs.append(ExchangePair(
+                base=base,
+                quote=quote,
+                price=price,
+                volume=volume_usd
+            ))
+
+
+        return PairsResponse(exchange_id=exchange_name, pairs=ex_pairs)
+
 
     async def get_most_trusted(self, session: AsyncSession) -> list[str]:
         stmt = select(Exchange.ccxt_name).where(Exchange.trust_score > 5)

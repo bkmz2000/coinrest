@@ -161,6 +161,21 @@ class MappedCoinResponse(BaseModel):
     cg_id: str
     base: str
 
+class ExchangePair(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    base: str
+    quote: str
+
+    price: float
+    volume: float
+
+class PairsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    exchange_id: str
+    pairs: list[ExchangePair]
+
 # {
 #   "event": "entry.update",
 #   "createdAt": "2020-01-10T08:58:26.563Z",

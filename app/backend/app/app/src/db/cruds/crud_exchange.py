@@ -7,7 +7,7 @@ from sqlalchemy import select, func, text, update, null, bindparam
 from loguru import logger as lg
 
 from src.db.models import Exchange, ExchangeMapper, Ticker
-from src.lib.schema import ExchangeResponse, StrapiMarket, ExchangeNameResponse, TopExchangeResponse, PairsResponse, ExchangePair, TickerResponse, TickerInfo
+from src.lib.schema import ExchangeResponse, StrapiMarket, ExchangeNameResponse, TopExchangeResponse, PairsResponse, ExchangePair, TickerResponse, TickerInfo, TopPairsResponse, PercentagePair
 from src.lib import utils
 
 
@@ -99,8 +99,6 @@ class ExchangeCRUD:
         id_req = select(Exchange.id).where(Exchange.ccxt_name == exchange_name)
         exchange_id = (await session.execute(id_req)).scalar_one_or_none()
 
-        lg.debug(f"req = {str(id_req)} id = {exchange_id} end")
-
         pairs_req = select(Ticker).where(Ticker.exchange_id == exchange_id)
 
         result = await session.execute(pairs_req)
@@ -122,7 +120,40 @@ class ExchangeCRUD:
 
 
         return PairsResponse(exchange_id=exchange_name, pairs=ex_pairs)
+    
+    async def get_top_pairs(self, session: AsyncSession, exchange_name: str) -> TopPairsResponse:
+        id_req = select(Exchange.id).where(Exchange.ccxt_name == exchange_name)
+        exchange_id = (await session.execute(id_req)).scalar_one_or_none()
 
+        total_subreq = select(func.sum(Ticker.volume_usd)).filter(Ticker.exchange_id == exchange_id).scalar_subquery()
+        
+        req = (select(
+            Ticker.base,
+            Ticker.quote,
+            Ticker.volume_usd,
+            (100 * Ticker.volume_usd/total_subreq).label('percentage'))
+            .where(Ticker.exchange_id == exchange_id)
+            .order_by((Ticker.volume_usd/total_subreq).desc())
+            .limit(3)
+        )
+
+        result = await session.execute(req)
+        lines = result.all()
+
+        lg.debug(f'lines = {lines}, name={exchange_name}, id ={exchange_id}')
+
+        pairs: list[PercentagePair] = []
+
+        for base, quote, volume, percentage in lines:
+            pairs.append(PercentagePair(
+                pair = f'{base}/{quote}',
+                volume = volume,
+                percentage=percentage))
+            
+        return TopPairsResponse(exchange_id=exchange_name, pairs=pairs)
+
+
+    
 
     async def get_most_trusted(self, session: AsyncSession) -> list[str]:
         stmt = select(Exchange.ccxt_name).where(Exchange.trust_score > 5)

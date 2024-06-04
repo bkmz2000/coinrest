@@ -187,6 +187,21 @@ class TopPairsResponse(BaseModel):
 
     exchange_id: str
     pairs: list[PercentagePair]
+
+class CoinPercentage(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    coin: str
+    volume: float
+    percentage: float
+
+class TopCoinsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    exchange_id: str
+    coins: list[CoinPercentage]
+
+
 # {
 #   "event": "entry.update",
 #   "createdAt": "2020-01-10T08:58:26.563Z",

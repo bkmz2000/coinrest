@@ -7,7 +7,7 @@ from sqlalchemy import select, func, text, update, null, bindparam
 from loguru import logger as lg
 
 from src.db.models import Exchange, ExchangeMapper, Ticker
-from src.lib.schema import ExchangeResponse, StrapiMarket, ExchangeNameResponse, TopExchangeResponse, PairsResponse, ExchangePair, TickerResponse, TickerInfo, TopPairsResponse, PercentagePair
+from src.lib.schema import ExchangeResponse, StrapiMarket, ExchangeNameResponse, TopExchangeResponse, PairsResponse, ExchangePair, TickerResponse, TickerInfo, TopPairsResponse, PercentagePair, TopCoinsResponse, CoinPercentage
 from src.lib import utils
 
 
@@ -133,15 +133,14 @@ class ExchangeCRUD:
             Ticker.volume_usd,
             (100 * Ticker.volume_usd/total_subreq).label('percentage'))
             .where(Ticker.exchange_id == exchange_id)
-            .order_by((Ticker.volume_usd/total_subreq).desc())
+            .order_by(text('percentage desc'))
             .limit(3)
         )
 
         result = await session.execute(req)
         lines = result.all()
 
-        lg.debug(f'lines = {lines}, name={exchange_name}, id ={exchange_id}')
-
+        lg.debug(lines)
         pairs: list[PercentagePair] = []
 
         for base, quote, volume, percentage in lines:
@@ -152,6 +151,33 @@ class ExchangeCRUD:
             
         return TopPairsResponse(exchange_id=exchange_name, pairs=pairs)
 
+    async def get_top_coins(self, session: AsyncSession, exchange_name: str) -> TopCoinsResponse:
+        id_req = select(Exchange.id).where(Exchange.ccxt_name == exchange_name)
+        exchange_id = (await session.execute(id_req)).scalar_one_or_none()
+
+        total_subreq = select(func.sum(Ticker.volume_usd)).filter(Ticker.exchange_id == exchange_id).scalar_subquery()
+
+        req = (select(
+                Ticker.base,
+                func.sum(Ticker.volume_usd).label('volume'),
+                (func.sum(Ticker.volume_usd) / total_subreq * 100).label('percentage'))
+                .where(Ticker.exchange_id == exchange_id)
+                .group_by(Ticker.base)
+                .order_by(text('percentage desc'))
+                .limit(3))
+        
+        result = await session.execute(req)
+        lines = result.all()
+
+        coins: list[CoinPercentage] = []
+
+        for base, volume, percentage in lines:
+            coins.append(CoinPercentage(
+                coin = base,
+                volume=volume,
+                percentage=percentage))
+            
+        return TopCoinsResponse(exchange_id=exchange_name, coins=coins)
 
     
 

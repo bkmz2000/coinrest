@@ -4,7 +4,7 @@ from starlette import status
 from src.db import connection
 from src.db.cruds.crud_exchange import ExchangeCRUD
 from src.db.cruds.crud_ticker import TickerCRUD
-from src.lib.schema import TopExchangeResponse, PairsResponse, TopPairsResponse
+from src.lib.schema import TopExchangeResponse, PairsResponse, TopPairsResponse, TopCoinsResponse
 
 router = APIRouter()
 
@@ -29,6 +29,11 @@ async def get_pairs(session: AsyncSession = Depends(connection.get_db), exchange
     return await ex.get_pairs(session, exchange_name)
 
 @router.get("/top_pairs", response_model=TopPairsResponse)
-async def get_pairs(session: AsyncSession = Depends(connection.get_db), exchange_name: str = Query()):
+async def get_top_pairs(session: AsyncSession = Depends(connection.get_db), exchange_name: str = Query()):
     ex = ExchangeCRUD()
     return await ex.get_top_pairs(session, exchange_name)
+
+@router.get("/top_coins", response_model=TopCoinsResponse)
+async def get_top_coins(session: AsyncSession = Depends(connection.get_db), exchange_name: str = Query()):
+    ex = ExchangeCRUD()
+    return await ex.get_top_coins(session, exchange_name)

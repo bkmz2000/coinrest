@@ -356,7 +356,7 @@ class TickerCRUD:
         for res in result:
             exs_dict[res["ccxt_name"]].append(MappedCoinResponse(
                 base=res["base"],
-                cg_id=res["base_cg"]
+                hdr_id=res["base_cg"]
             )
 
             )

@@ -25,7 +25,7 @@ class HistoricalCRUD:
         await session.commit()
 
     async def get_data(self, session: AsyncSession, coins: list[NewHistoricalRequest]) -> list[HistoricalResponse]:
-        stmt = select(Historical.cg_id,
+        stmt = select(Historical.cg_id.label("hdr_id"),
                       Historical.price_usd.label("price"),
                       Historical.volume_usd.label("volume"),
                       Historical.price_btc,
@@ -33,7 +33,7 @@ class HistoricalCRUD:
                       Historical.timestamp.label("stamp"))
         conditions = []
         for coin in coins:
-            condition = (Historical.cg_id == coin.cg_id) & (Historical.timestamp == coin.stamp)
+            condition = (Historical.cg_id == coin.hdr_id) & (Historical.timestamp == coin.stamp)
             conditions.append(condition)
         stmt = stmt.where(or_(*conditions)).limit(120000)
         result = await session.execute(stmt)

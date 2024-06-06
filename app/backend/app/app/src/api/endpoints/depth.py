@@ -8,12 +8,12 @@ router = APIRouter()
 
 
 @router.get("/", response_model=MarketDepthResponse | None)
-async def get_market_depth(cg_id: str,
+async def get_market_depth(hdr_id: str,
                            depth: int = Query(2, description="market depth in percents"),
                            session: AsyncSession = Depends(connection.get_db)):
     """
         Get market depth
     """
-    return await get_depth(cg_id=cg_id, depth=depth, session=session)
+    return await get_depth(cg_id=hdr_id, depth=depth, session=session)
 
 

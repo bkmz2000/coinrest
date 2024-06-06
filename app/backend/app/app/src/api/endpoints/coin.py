@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/exchanges", response_model=MarketResponse)
-async def get_ticker_exchanges(cg_id: str,
+async def get_ticker_exchanges(hdr_id: str,
                                limit: int = Query(100),
                                offset: int = Query(0),
                                currency: str = Query('All', description="Use 'All' for all currencies or ex.: 'BTC', 'USDT' "),
@@ -28,7 +28,7 @@ async def get_ticker_exchanges(cg_id: str,
         Get coin exchanges
     """
     crud = TickerCRUD()
-    coins, total = await crud.exchanges_by_cg_id(cg_id=cg_id,
+    coins, total = await crud.exchanges_by_cg_id(cg_id=hdr_id,
                                                  limit=limit,
                                                  offset=offset,
                                                  currency=currency,

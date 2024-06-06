@@ -109,13 +109,13 @@ class HistoricalRequest(BaseModel):
 
 
 class NewHistoricalRequest(BaseModel):
-    cg_id: str
+    hdr_id: str
     timeframe: Literal['5m', '1h', '1d']
     stamp: int
 
 
 class HistoricalResponse(BaseModel):
-    cg_id: str
+    hdr_id: str
     stamp: int
     price: float
     price_btc: float | None = None
@@ -158,7 +158,7 @@ class MarketDepthResponse(BaseModel):
 
 
 class MappedCoinResponse(BaseModel):
-    cg_id: str
+    hdr_id: str
     base: str
 
 class ExchangePair(BaseModel):

@@ -23,7 +23,7 @@ async def get_socket_last() -> list[utils.SocketUpdated]:
                 data = await resp.json()
                 for coin in data:
                     result.append(utils.SocketUpdated(
-                        cg_id=coin["cg_id"],
+                        cg_id=coin["hodler_id"],
                         price_usd=coin["price"],
                         exchange=coin["exchange"],
                         updated_at=coin["updated_at"],

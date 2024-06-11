@@ -166,6 +166,13 @@ class SocketUpdated(BaseModel):
     updated_at: datetime.datetime
 
 
+class FiatRate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    currency: str
+    rate: float
+    updated_at: datetime.datetime
+
 def repeat_forever(func):
     """
         Restart func every 5 minutes/

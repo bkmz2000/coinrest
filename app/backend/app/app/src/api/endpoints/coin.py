@@ -3,6 +3,7 @@ from typing import Literal
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, Query
 from src.db import connection
+from src.db.crud import get_fiat_currency_rate
 from src.db.cruds.crud_ticker import TickerCRUD
 from src.db.cruds.crud_last import LastCRUD
 from src.lib.schema import MarketResponse, CoinResponse
@@ -15,7 +16,8 @@ router = APIRouter()
 async def get_ticker_exchanges(hdr_id: str,
                                limit: int = Query(100),
                                offset: int = Query(0),
-                               currency: str = Query('All', description="Use 'All' for all currencies or ex.: 'BTC', 'USDT' "),
+                               currency: Literal['AUD', 'BRL', 'BTC', 'CAD', 'CHF', 'CNY', 'CZK', 'EUR', 'GBP', 'IDR', 'INR', 'JPY', 'KRW', 'KZT', 'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN', 'RUB', 'SEK', 'SGD', 'TRY', 'USD', 'ZAR'] = Query('USD'),
+                               quote_currency: str = Query('All', description="Use 'All' for all currencies or ex.: 'BTC', 'USDT' "),
                                exchange_type: Literal['All', 'CEX', 'DEX'] = Query('All'),
                                trading_type: Literal['Spot', 'Perpetual', 'Futures'] = Query('Spot'),
                                id_sort: Literal['NO', 'ASC', 'DESC'] = Query('NO'),
@@ -31,7 +33,7 @@ async def get_ticker_exchanges(hdr_id: str,
     coins, total = await crud.exchanges_by_cg_id(cg_id=hdr_id,
                                                  limit=limit,
                                                  offset=offset,
-                                                 currency=currency,
+                                                 quote_currency=quote_currency,
                                                  exchange_type=exchange_type,
                                                  trading_type=trading_type,
                                                  id_sort=id_sort,
@@ -40,6 +42,9 @@ async def get_ticker_exchanges(hdr_id: str,
                                                  price_sort=price_sort,
                                                  volume_sort=volume_sort,
                                                  session=session)
+    rate = 1
+    if currency != "USD":
+        rate = await get_fiat_currency_rate(session=session, currency=currency)
     result = []
     quotes = set()
     for coin in coins:
@@ -48,8 +53,8 @@ async def get_ticker_exchanges(hdr_id: str,
             exchange=coin['full_name'],
             logo=coin['logo'],
             pair=coin['base'] + '/' + coin['quote'],
-            price=coin['price_usd'],
-            volume_24h=coin['volume_usd'],
+            price=coin['price_usd'] * rate,
+            volume_24h=coin['volume_usd'] * rate,
             exchange_type="CEX" if coin['centralized'] else "DEX",
             trading_type="Spot"
         ))
@@ -65,3 +70,11 @@ async def get_ticker_exchanges(hdr_id: str,
 async def lost_coins(session: AsyncSession = Depends(connection.get_db)):
     crud = LastCRUD()
     return await crud.get_lost_coins(session=session)
+
+
+@router.get("/quotes", response_model=list[str])
+async def lost_coins(hdr_id: str, session: AsyncSession = Depends(connection.get_db)):
+    crud = TickerCRUD()
+    return await crud.get_coin_quotes(session=session, hdr_id=hdr_id)
+
+

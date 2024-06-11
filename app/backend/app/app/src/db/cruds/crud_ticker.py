@@ -90,7 +90,7 @@ class TickerCRUD:
                                  cg_id: str,
                                  limit: int,
                                  offset: int,
-                                 currency: str,
+                                 quote_currency: str,
                                  exchange_type: str,
                                  trading_type: str,
                                  id_sort: str,
@@ -113,8 +113,8 @@ class TickerCRUD:
                 .where(Ticker.volume_usd > 0)
                 )
 
-        if currency != "All":
-            stmt = stmt.filter(Ticker.quote == currency)
+        if quote_currency != "All":
+            stmt = stmt.filter(Ticker.quote == quote_currency)
 
         if exchange_type != "All":
             if exchange_type == "CEX":
@@ -361,6 +361,13 @@ class TickerCRUD:
 
             )
         return exs_dict
+
+
+    async def get_coin_quotes(self, session: AsyncSession, hdr_id: str) -> list[str]:
+        stmt = select(Ticker.quote.distinct()).where(Ticker.base_cg == hdr_id)
+        result = await session.execute(stmt)
+        result = result.scalars().all()
+        return result
 
 
 async def main():

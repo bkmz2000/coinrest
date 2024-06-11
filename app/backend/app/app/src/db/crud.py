@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from loguru import logger as lg
 
 from src.db.connection import AsyncSessionFactory
-from src.db.models import ExchangeMapper, QuoteMapper, Ticker, Exchange, OrderBook, LatestSocketUpdate
+from src.db.models import ExchangeMapper, QuoteMapper, Ticker, Exchange, OrderBook, LatestSocketUpdate, FiatCurrencyRates
 from src.lib import utils
 from src.lib import schema
 
@@ -179,6 +179,28 @@ async def save_socket_last_info(session: AsyncSession, coins: list[utils.SocketU
     )
     await session.execute(update_stmt)
     await session.commit()
+
+
+async def update_fiat_currency_rates(session: AsyncSession, rates: list[utils.FiatRate]):
+    value_list = [coin.model_dump() for coin in rates]
+    insert_stmt = insert(FiatCurrencyRates).values(value_list)
+    update_stmt = insert_stmt.on_conflict_do_update(
+        index_elements=[FiatCurrencyRates.currency],
+        set_=dict(
+            rate=insert_stmt.excluded.rate,
+            updated_at=insert_stmt.excluded.updated_at
+        )
+    )
+    await session.execute(update_stmt)
+    await session.commit()
+
+
+async def get_fiat_currency_rate(session: AsyncSession, currency: str) -> float | None:
+    stmt = select(FiatCurrencyRates.rate).where(FiatCurrencyRates.currency == currency)
+    result = await session.execute(stmt)
+    rate = result.scalar_one_or_none()
+    return rate
+
 
 async def main():
     ...

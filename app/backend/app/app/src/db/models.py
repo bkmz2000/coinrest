@@ -169,3 +169,13 @@ class LatestSocketUpdate(Base):
     updated_at: Mapped[int] = mapped_column(UnixTimestamp, nullable=True, default=datetime.datetime.utcnow())
 
     __table_args__ = (UniqueConstraint("cg_id", name="socket_update_unique_coin_id"),)
+
+
+class FiatCurrencyRates(Base):
+    __tablename__ = 'fiat_currency_rates'
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
+    currency: Mapped[str] = mapped_column(TEXT, nullable=True)
+    rate: Mapped[float] = mapped_column(NUMERIC, nullable=True)
+    updated_at: Mapped[int] = mapped_column(UnixTimestamp, nullable=True, default=datetime.datetime.utcnow())
+
+    __table_args__ = (UniqueConstraint("currency", name="fiat_currency_unique_symbol"),)

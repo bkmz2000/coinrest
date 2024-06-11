@@ -7,7 +7,7 @@ from src.celery_app import app
 from src.tasks.calculate_total_markets import main as calculate_last_price
 from src.tasks.update_coingecko_mapper import main as update_mapper
 from src.tasks.force_mapper import main as old_update_mapper
-from src.tasks.update_quote_rates import main as update_quote_currency
+from src.tasks.update_rates import main as update_quote_currency
 from src.tasks.get_exchange_markets import main as last_tickers
 from src.tasks.strapi_sync import main as strapi_sync
 from src.tasks.update_actual_coin_ids import main as update_coingecko_actual

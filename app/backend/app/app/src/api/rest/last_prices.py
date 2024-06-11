@@ -68,7 +68,7 @@ async def get_new_tickers(session: AsyncSession):
                 new_for_market=new_for_market,
                 new_for_exchange=True,
             ))
-    return new_coins
+    return sorted(new_coins, key=lambda x: x.created_at, reverse=True)
 
 
 async def main():

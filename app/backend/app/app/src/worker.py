@@ -24,16 +24,15 @@ IS_DEV = os.environ.get("IS_DEV", False)
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
     ...
-    sender.add_periodic_task(300.0, last_price_chain_task.s(), name="Last values calculation tasks chain")  # Calculate last_price then store it to hist db
     sender.add_periodic_task(300.0, update_quote_currency_task.s(), name="Update quote currency rates")
-    # sender.add_periodic_task(300.0, calculate_last_price_task.s(), name='Calculate actual last prices and 24_volumes') in chain
+    sender.add_periodic_task(60.0, calculate_last_price_task.s(), name='Calculate actual last prices and 24_volumes')
     sender.add_periodic_task(300.0, strapi_sync_task.s(), name="Sync strapi exchanges data with local db")
     sender.add_periodic_task(250.0, soket_watching_task.s(), name="Socket watching task")
 
     # Historical tasks
     sender.add_periodic_task(1200.0, top_historical_task.s(), name="Update top historical data from exchanges ohlcv")
     # sender.add_periodic_task(9000.0, all_historical_task.s(), name="Update all historical data from exchanges ohlcv")
-    # sender.add_periodic_task(300.0, historical_last_task.s(), name="Update historical table from last values, delete old data") in chain
+    sender.add_periodic_task(300.0, historical_last_task.s(), name="Update historical table from last values, delete old data")
 
     # Coingecko tasks
     sender.add_periodic_task(43200.0, update_mapper_task.s(), name="Update mapper for all exchanges")
@@ -100,11 +99,6 @@ def all_historical_task(*args, **kwargs):
 @app.task(time_limit=120)
 def historical_last_task(*args, **kwargs):
     asyncio.run(historical_last())
-
-
-@app.task(time_limit=100)
-def last_price_chain_task():
-    chain(calculate_last_price_task.s(), historical_last_task.s())()
 
 
 @app.task(time_limit=100)

@@ -8,7 +8,7 @@ import src.exchanges as my_exchanges
 from src.db.connection import AsyncSessionFactory
 from loguru import logger as lg
 from src.deps.markets import Market
-from src.lib.utils import NotActiveExchange, repeat_forever, CreateExchange
+from src.lib.utils import NotActiveExchange, repeat_with_timeout, CreateExchange
 from src.db.cruds.crud_exchange import ExchangeCRUD
 from src.strapi_sync.strapi import create_strapi_exchange
 from src.lib.quotes import active_ccxt_exchanges
@@ -21,7 +21,7 @@ async def main():
     await asyncio.gather(*[get_price_and_volume(ex=ex) for ex in exchanges])
 
 
-@repeat_forever
+@repeat_with_timeout(60)
 async def get_price_and_volume(ex: str):
     """
         Get last price and volume for exchange tickers and store them to db

@@ -173,21 +173,21 @@ class FiatRate(BaseModel):
     rate: float
     updated_at: datetime.datetime
 
-def repeat_forever(func):
-    """
-        Restart func every 5 minutes/
-        If task working more than 5 min, sleep only 2 secs
-    """
-    max_time = 300
 
-    async def wrapper(*args, **kwargs):
-        while True:
-            start_time = time.time()
-            await func(*args, **kwargs)
-            end_time = time.time() - start_time
-            to_sleep = max_time - end_time
-            if to_sleep < 0:
-                to_sleep = 2
-            await asyncio.sleep(to_sleep)
-
-    return wrapper
+def repeat_with_timeout(timeout: int):
+    """
+        Restart func every {timeout} seconds
+        If task working more than {timeout} seconds, sleep only 2 secs
+    """
+    def repeat_forever(func):
+        async def wrapper(*args, **kwargs):
+            while True:
+                start_time = time.time()
+                await func(*args, **kwargs)
+                end_time = time.time() - start_time
+                to_sleep = timeout - end_time
+                if to_sleep < 0:
+                    to_sleep = 2
+                await asyncio.sleep(to_sleep)
+        return wrapper
+    return repeat_forever

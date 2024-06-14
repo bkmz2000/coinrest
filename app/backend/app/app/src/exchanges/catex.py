@@ -3,6 +3,8 @@ import asyncio
 import aiohttp
 from loguru import logger as lg
 from src.exchanges.base import BaseExchange
+from aiohttp_proxy import ProxyConnector, ProxyType
+from src.deps.proxy import ProxyManager
 
 
 class catex(BaseExchange):
@@ -21,7 +23,17 @@ class catex(BaseExchange):
         :param url: URL to fetch the data from exchange
         :return: raw data
         """
-        async with aiohttp.ClientSession() as session:
+        proxy = ProxyManager().get_proxy()
+
+        connector = ProxyConnector(
+            proxy_type=ProxyType.HTTP,
+            host=proxy.host,
+            port=proxy.port,
+            username=proxy.username,
+            password=proxy.password,
+        )
+
+        async with aiohttp.ClientSession(connector=connector) as session:
             async with session.get(url) as resp:
                 if resp and resp.status == 200:
                     data = await resp.json(content_type='text/plain')

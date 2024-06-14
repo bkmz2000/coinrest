@@ -1,4 +1,10 @@
+import asyncio
+
 from src.exchanges.base import BaseExchange
+from aiohttp_proxy import ProxyConnector, ProxyType
+from src.deps.proxy import ProxyManager
+import aiohttp
+
 
 
 class stormgain(BaseExchange):
@@ -11,6 +17,25 @@ class stormgain(BaseExchange):
         self.full_name = "Stormgain"
         self.base_url = "https://public-api.stormgain.com"
         self.markets = {}
+
+    async def fetch_data(self, url: str):
+        proxy = ProxyManager().get_proxy()
+
+        connector = ProxyConnector(
+            proxy_type=ProxyType.HTTP,
+            host=proxy.host,
+            port=proxy.port,
+            username=proxy.username,
+            password=proxy.password,
+        )
+
+        async with aiohttp.ClientSession(connector=connector) as session:
+            async with session.get(url) as resp:
+                if resp and resp.status == 200:
+                    data = await resp.json()
+                else:
+                    raise Exception(resp)
+        return data
 
     async def fetch_tickers(self) -> dict[str, dict]:
         if not self.markets:

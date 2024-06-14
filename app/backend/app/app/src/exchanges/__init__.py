@@ -28,6 +28,13 @@ from src.exchanges.backpack import backpack_exchange
 from src.exchanges.fameex import fameex
 from src.exchanges.onetradin import onetrading
 from src.exchanges.bitstorage import bitstorage
+from src.exchanges.alterdice import alterdice
+from src.exchanges.bittrade import bittrade
+from src.exchanges.catex import catex
+from src.exchanges.coinmetro import coinmetro
+from src.exchanges.cryptology import cryptology
+from src.exchanges.gmo_japan import gmo_japan
+from src.exchanges.qmall import qmall
 
 
 custom_exchanges = [
@@ -61,4 +68,11 @@ custom_exchanges = [
     "bydfi",
     "bitmake",
     "stormgain",
+    "alterdice",
+    "bittrade",
+    "catex",
+    "coinmetro",
+    "cryptology",
+    "gmo_japan",
+    "qmall",
 ]

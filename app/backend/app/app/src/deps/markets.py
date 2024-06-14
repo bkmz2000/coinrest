@@ -46,7 +46,7 @@ class Market:
             ex_crud = ExchangeCRUD()
             is_active = await ex_crud.check_is_active(session, self.exchange_name)
             if not is_active:
-                raise NotActiveExchange(f"{self.exchange_name} Exchange was disabled")
+                raise NotActiveExchange(f"{self.exchange_name} Exchange not active")
 
             # Load markets for all exchanges
             self._init_fetch_timeout()

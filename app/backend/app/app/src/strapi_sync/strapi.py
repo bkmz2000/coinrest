@@ -61,17 +61,6 @@ async def update_strapi_state(exchange: str, data: UpdateEventTo):
         lg.error(f"Failed strapi update {e}")
 
 
-async def create_strapi_exchange(data: CreateExchange):
-    try:
-        exchange_exists = await get_strapi_exchange_id(data.ccxt_name)
-        if exchange_exists:
-            return
-        await create(data)
-        lg.info(f"New exchange {data.ccxt_name} created in strapi")
-    except Exception as e:
-        lg.error(f"Failed strapi exchange create {e}")
-
-
 async def main():
     strapi_id = await get_strapi_exchange_id("bequant")
     data = {

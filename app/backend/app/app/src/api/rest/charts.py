@@ -55,20 +55,20 @@ async def get_charts(exchange_name: str,
             period=period,
             data=[]
         )
-    current = min(charts.keys())
-    end = max(charts.keys())
+    right = max(charts.keys())
+    left = right - (chart_params["limit"] * chart_params["step"])
     step = chart_params["step"]
     chart_entries = []
-    while current <= end:
-        if not charts.get(current):
-            charts[current] = charts.get(current - step)
+    while left <= right:
+        if not charts.get(left):
+            charts[left] = charts.get(left - step)
         chart_entries.append(
             schema.ChartEntry(
-                timestamp=current,
-                volume_usd=charts[current]["volume_usd"],
+                timestamp=left,
+                volume_usd=charts[left]["volume_usd"],
             )
         )
-        current += step
+        left += step
     response = schema.ExchangeChartResponse(exchange_id=exchange_name,
                                             period=period,
                                             data=chart_entries)

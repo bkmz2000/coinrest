@@ -17,6 +17,7 @@ from src.tasks.update_historical_last import main as historical_last
 from src.tasks.top_volume_tickers import main as top_volume_tickers
 from src.tasks.market_depth import main as market_depth
 from src.tasks.socket_last import main as socket_watch
+from src.tasks.save_exchange_volume import main as exchange_volumes
 
 
 IS_DEV = os.environ.get("IS_DEV", False)
@@ -33,6 +34,7 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(1200.0, top_historical_task.s(), name="Update top historical data from exchanges ohlcv")
     # sender.add_periodic_task(9000.0, all_historical_task.s(), name="Update all historical data from exchanges ohlcv")
     sender.add_periodic_task(300.0, historical_last_task.s(), name="Update historical table from last values, delete old data")
+    sender.add_periodic_task(300.0, exchange_volumes_task.s(), name="Update exchange chart tables, delete old data")
 
     # Coingecko tasks
     sender.add_periodic_task(43200.0, update_mapper_task.s(), name="Update mapper for all exchanges")
@@ -119,3 +121,7 @@ def market_depth_chain_task():
 @app.task(time_limit=60)
 def soket_watching_task():
     asyncio.run(socket_watch())
+
+@app.task(time_limit=60)
+def exchange_volumes_task():
+    asyncio.run(exchange_volumes())

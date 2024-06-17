@@ -202,6 +202,17 @@ class TopCoinsResponse(BaseModel):
     coins: list[CoinPercentage]
 
 
+class ChartEntry(BaseModel):
+    timestamp: int
+    volume_usd: float
+
+
+class ExchangeChartResponse(BaseModel):
+    exchange_id: str
+    period: Literal['24h', '7d', '14d', '1M', '3M', '1Y']
+    data: list[ChartEntry]
+
+
 # {
 #   "event": "entry.update",
 #   "createdAt": "2020-01-10T08:58:26.563Z",

@@ -50,7 +50,15 @@ class Exchange(Base):
     exchange_tickers_mapper: Mapped[List["ExchangeMapper"]] = relationship(back_populates="exchange",
                                                                            cascade="all, delete",
                                                                            passive_deletes=True)
-
+    exchange_volume_chart_5m: Mapped[List["FiveMinExchangeVolumeChart"]] = relationship(back_populates="exchange",
+                                                                        cascade="all, delete",
+                                                                        passive_deletes=True)
+    exchange_volume_chart_1h: Mapped[List["OneHourExchangeVolumeChart"]] = relationship(back_populates="exchange",
+                                                                        cascade="all, delete",
+                                                                        passive_deletes=True)
+    exchange_volume_chart_1d: Mapped[List["OneDayExchangeVolumeChart"]] = relationship(back_populates="exchange",
+                                                                        cascade="all, delete",
+                                                                        passive_deletes=True)
     __table_args__ = (UniqueConstraint("ccxt_name", name="unique_exchange_name"),)
 
     def __str__(self):
@@ -179,3 +187,39 @@ class FiatCurrencyRates(Base):
     updated_at: Mapped[int] = mapped_column(UnixTimestamp, nullable=True, default=datetime.datetime.utcnow())
 
     __table_args__ = (UniqueConstraint("currency", name="fiat_currency_unique_symbol"),)
+
+
+class FiveMinExchangeVolumeChart(Base):
+    __tablename__ = 'exchange_volume_chart_5m'
+
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
+    exchange_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("exchange.id", ondelete="CASCADE"), nullable=True)
+    exchange: Mapped["Exchange"] = relationship(back_populates="exchange_volume_chart_5m")
+    volume_usd: Mapped[float] = mapped_column(NUMERIC, nullable=True)
+    timestamp: Mapped[int] = mapped_column(BIGINT, nullable=True)
+
+    __table_args__ = (UniqueConstraint("exchange_id", "timestamp", name="exchange_stamp_unique_5m"),)
+
+
+class OneHourExchangeVolumeChart(Base):
+    __tablename__ = 'exchange_volume_chart_1h'
+
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
+    exchange_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("exchange.id", ondelete="CASCADE"), nullable=True)
+    exchange: Mapped["Exchange"] = relationship(back_populates="exchange_volume_chart_1h")
+    volume_usd: Mapped[float] = mapped_column(NUMERIC, nullable=True)
+    timestamp: Mapped[int] = mapped_column(BIGINT, nullable=True)
+
+    __table_args__ = (UniqueConstraint("exchange_id", "timestamp", name="exchange_stamp_unique_1h"),)
+
+
+class OneDayExchangeVolumeChart(Base):
+    __tablename__ = 'exchange_volume_chart_1d'
+
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
+    exchange_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("exchange.id", ondelete="CASCADE"), nullable=True)
+    exchange: Mapped["Exchange"] = relationship(back_populates="exchange_volume_chart_1d")
+    volume_usd: Mapped[float] = mapped_column(NUMERIC, nullable=True)
+    timestamp: Mapped[int] = mapped_column(BIGINT, nullable=True)
+
+    __table_args__ = (UniqueConstraint("exchange_id", "timestamp", name="exchange_stamp_unique_1d"),)

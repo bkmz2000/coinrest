@@ -203,3 +203,10 @@ class ExchangeCRUD:
         await session.execute(insert(Exchange).values(asdict(exchange)))
         await session.commit()
         lg.info(f"New exchange {exchange.ccxt_name} created in db")
+
+    async def get_ex_ids(self, session: AsyncSession):
+        stmt = select(Exchange.cg_identifier, Exchange.id).where(Exchange.cg_identifier.is_not(null()))
+        result = await session.execute(stmt)
+        result = result.mappings()
+        result = [dict(res) for res in result]
+        return result

@@ -10,7 +10,7 @@ from loguru import logger as lg
 
 from src.lib import schema
 from src.db.connection import AsyncSessionFactory
-from src.db.models import Historical
+from src.db.models import Historical, FiveMinExchangeVolumeChart, OneHourExchangeVolumeChart, OneDayExchangeVolumeChart, Exchange, Ticker
 from src.lib.schema import HistoricalResponse, NewHistoricalRequest
 from src.lib.utils import HistoricalDT
 
@@ -74,6 +74,111 @@ class HistoricalCRUD:
         stmt = delete(Historical).where(Historical.timestamp < stamp_24_hr)
         await session.execute(stmt)
         await session.commit()
+
+    async def save_exchange_chart_volumes(self, session: AsyncSession):
+        five_min_stmt = text(
+            """
+                INSERT INTO exchange_volume_chart_5m(exchange_id, volume_usd, timestamp)
+                    SELECT 
+                        e.id,
+                        COALESCE(sum(t.volume_usd), 0) AS volume,
+                        round(extract(epoch FROM date_bin('5 min', now(), '2024-1-1'))) as timestamp 
+                    FROM 
+                        exchange e
+                    LEFT JOIN (
+                        SELECT * FROM ticker WHERE last_update > (select round(extract(epoch from now()) - 3600))
+                    ) t ON e.id = t.exchange_id
+                    GROUP BY e.id
+                ON CONFLICT ON CONSTRAINT exchange_stamp_unique_5m
+                DO UPDATE SET
+                    volume_usd = EXCLUDED.volume_usd
+            """
+        )
+        one_hour_stmt = text(
+            """
+                INSERT INTO exchange_volume_chart_1h(exchange_id, volume_usd, timestamp)
+                    SELECT 
+                        e.id,
+                        COALESCE(sum(t.volume_usd), 0) AS volume,
+                        round(extract(epoch FROM date_bin('1 hour', now(), '2024-1-1'))) as timestamp 
+                    FROM 
+                        exchange e
+                    LEFT JOIN (
+                        SELECT * FROM ticker WHERE last_update > (select round(extract(epoch from now()) - 3600))
+                    ) t ON e.id = t.exchange_id
+                    GROUP BY e.id
+                ON CONFLICT ON CONSTRAINT exchange_stamp_unique_1h
+                DO UPDATE SET
+                    volume_usd = EXCLUDED.volume_usd
+            """
+        )
+        one_day_stmt = text(
+            """
+                INSERT INTO exchange_volume_chart_1d(exchange_id, volume_usd, timestamp)
+                    SELECT 
+                        e.id,
+                        COALESCE(sum(t.volume_usd), 0) AS volume,
+                        round(extract(epoch FROM date_bin('1 day', now(), '2024-1-1'))) as timestamp 
+                    FROM 
+                        exchange e
+                    LEFT JOIN (
+                        SELECT * FROM ticker WHERE last_update > (select round(extract(epoch from now()) - 3600))
+                    ) t ON e.id = t.exchange_id
+                    GROUP BY e.id
+                ON CONFLICT ON CONSTRAINT exchange_stamp_unique_1d
+                DO UPDATE SET
+                    volume_usd = EXCLUDED.volume_usd
+            """
+        )
+
+        await session.execute(five_min_stmt)
+        await session.execute(one_hour_stmt)
+        await session.execute(one_day_stmt)
+        await session.commit()
+
+    async def delete_old_chart_data(self, session: AsyncSession):
+        day_ago = int(time.time()) - 3600 * 24
+        month_ago = int(time.time()) - 3600 * 24 * 31
+        year_ago = int(time.time()) - 3600 * 24 * 365
+        min_stmt = delete(FiveMinExchangeVolumeChart).where(FiveMinExchangeVolumeChart.timestamp < day_ago)
+        month_stmt = delete(OneHourExchangeVolumeChart).where(OneHourExchangeVolumeChart.timestamp < month_ago)
+        day_stmt = delete(OneDayExchangeVolumeChart).where(OneDayExchangeVolumeChart.timestamp < year_ago)
+        await session.execute(min_stmt)
+        await session.execute(month_stmt)
+        await session.execute(day_stmt)
+        await session.commit()
+
+
+    async def store_gecko_data(self, session: AsyncSession, data: list):
+        stmt = insert(OneHourExchangeVolumeChart).values(data)
+        do_update = stmt.on_conflict_do_update(
+            index_elements=[OneHourExchangeVolumeChart.exchange_id, OneHourExchangeVolumeChart.timestamp],
+            set_=dict(
+                volume_usd=stmt.excluded.volume_usd,
+            ))
+        await session.execute(do_update)
+        await session.commit()
+
+
+    async def get_charts(self, session: AsyncSession, exchange_name: str, chart_params: dict):
+        type = chart_params["type"]
+        if type == "5_minute":
+            table = FiveMinExchangeVolumeChart
+        elif type == "hourly":
+            table = OneHourExchangeVolumeChart
+        else:
+            table = OneDayExchangeVolumeChart
+
+        stmt = (select(Exchange.ccxt_name, table.volume_usd, table.timestamp)
+                .join(Exchange, Exchange.id == table.exchange_id)
+                .where(Exchange.ccxt_name == exchange_name)
+                .order_by(table.timestamp.desc())
+                .limit(chart_params["limit"])
+                )
+        result = await session.execute(stmt)
+        result = result.mappings()
+        result = {res['timestamp']: dict(res) for res in result}
+        return result
 
 
 async def main():

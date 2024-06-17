@@ -1,10 +1,13 @@
+from typing import Literal
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, Query
 from starlette import status
 from src.db import connection
 from src.db.cruds.crud_exchange import ExchangeCRUD
 from src.db.cruds.crud_ticker import TickerCRUD
-from src.lib.schema import TopExchangeResponse, PairsResponse, TopPairsResponse, TopCoinsResponse
+from src.lib.schema import TopExchangeResponse, PairsResponse, TopPairsResponse, TopCoinsResponse, ExchangeChartResponse
+from src.api.rest import charts
 
 router = APIRouter()
 
@@ -37,3 +40,10 @@ async def get_top_pairs(session: AsyncSession = Depends(connection.get_db), exch
 async def get_top_coins(session: AsyncSession = Depends(connection.get_db), exchange_name: str = Query()):
     ex = ExchangeCRUD()
     return await ex.get_top_coins(session, exchange_name)
+
+
+@router.get("/chart", response_model=ExchangeChartResponse)
+async def get_charts(exchange_name: str, period: Literal['24h', '7d', '14d', '1M', '3M', '1Y'], session: AsyncSession = Depends(connection.get_db)):
+    return await charts.get_charts(exchange_name, period, session)
+
+

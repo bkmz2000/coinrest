@@ -89,6 +89,14 @@ class LastCRUD:
         result = [utils.LastCoinWithSymbol.model_validate(res) for res in result]
         return result
 
+
+    async def get_btc_last(self, session: AsyncSession):
+        stmt = select(LastValues.price_usd).where(LastValues.cg_id == 'bitcoin')
+        result = await session.execute(stmt)
+        result = result.scalar_one_or_none()
+        return result
+
+
 async def main():
     from src.db.connection import AsyncSessionFactory
     async with AsyncSessionFactory() as session:

@@ -204,12 +204,13 @@ class TopCoinsResponse(BaseModel):
 
 class ChartEntry(BaseModel):
     timestamp: int
-    volume_usd: float
+    volume: float
 
 
 class ExchangeChartResponse(BaseModel):
     exchange_id: str
     period: Literal['24h', '7d', '14d', '1M', '3M', '1Y']
+    currency: str
     data: list[ChartEntry]
 
 

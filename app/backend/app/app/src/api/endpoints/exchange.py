@@ -43,7 +43,10 @@ async def get_top_coins(session: AsyncSession = Depends(connection.get_db), exch
 
 
 @router.get("/chart", response_model=ExchangeChartResponse)
-async def get_charts(exchange_name: str, period: Literal['24h', '7d', '14d', '1M', '3M', '1Y'], session: AsyncSession = Depends(connection.get_db)):
-    return await charts.get_charts(exchange_name, period, session)
+async def get_charts(exchange_name: str,
+                     period: Literal['24h', '7d', '14d', '1M', '3M', '1Y'],
+                     currency: Literal['AUD', 'BRL', 'BTC', 'CAD', 'CHF', 'CNY', 'CZK', 'EUR', 'GBP', 'IDR', 'INR', 'JPY', 'KRW', 'KZT', 'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN', 'RUB', 'SEK', 'SGD', 'TRY', 'USD', 'ZAR'] = Query('USD'),
+                     session: AsyncSession = Depends(connection.get_db)):
+    return await charts.get_charts(exchange_name, period, currency, session)
 
 

@@ -1,8 +1,11 @@
+import asyncio
 from typing import Literal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.db.connection import AsyncSessionFactory
 from src.db.cruds.crud_historical import HistoricalCRUD
+from src.db.crud import get_fiat_currency_rate
 from src.lib import schema
 
 CHART = {
@@ -42,6 +45,7 @@ CHART = {
 
 async def get_charts(exchange_name: str,
                      period: Literal['24h', '7d', '14d', '1M', '3M', '1Y'],
+                     currency: str,
                      session: AsyncSession) -> schema.ExchangeChartResponse:
     """
         Get exchanges volumes chart
@@ -49,6 +53,12 @@ async def get_charts(exchange_name: str,
     chart_params = CHART.get(period)
     historical = HistoricalCRUD()
     charts = await historical.get_charts(session=session, chart_params=chart_params, exchange_name=exchange_name)
+
+    if currency != "USD":
+        currency_rate = await get_fiat_currency_rate(session=session, currency=currency)
+    else:
+        currency_rate = 1
+
     if not charts:
         return schema.ExchangeChartResponse(
             exchange_id=exchange_name,
@@ -59,17 +69,20 @@ async def get_charts(exchange_name: str,
     left = right - (chart_params["limit"] * chart_params["step"])
     step = chart_params["step"]
     chart_entries = []
+
     while left <= right:
-        if not charts.get(left):
-            charts[left] = charts.get(left - step)
+        chart = charts.get(left)
+        if not chart:
+            chart = charts.get(left - step, {"volume_usd": 0})
         chart_entries.append(
             schema.ChartEntry(
                 timestamp=left,
-                volume_usd=charts[left]["volume_usd"],
+                volume=chart["volume_usd"] * currency_rate,
             )
         )
         left += step
     response = schema.ExchangeChartResponse(exchange_id=exchange_name,
+                                            currency=currency,
                                             period=period,
                                             data=chart_entries)
     return response

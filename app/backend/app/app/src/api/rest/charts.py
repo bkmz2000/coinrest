@@ -74,6 +74,7 @@ async def get_charts(exchange_name: str,
         chart = charts.get(left)
         if not chart:
             chart = charts.get(left - step, {"volume_usd": 0})
+            charts[left] = chart
         chart_entries.append(
             schema.ChartEntry(
                 timestamp=left,

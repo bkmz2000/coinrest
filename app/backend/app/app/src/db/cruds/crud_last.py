@@ -89,11 +89,14 @@ class LastCRUD:
         result = [utils.LastCoinWithSymbol.model_validate(res) for res in result]
         return result
 
-
-    async def get_btc_last(self, session: AsyncSession):
-        stmt = select(LastValues.price_usd).where(LastValues.cg_id == 'bitcoin')
+    async def get_new_coins(self, session: AsyncSession) -> list[schema.NewCoinResponse]:
+        seven_days_ago = datetime.datetime.now() - datetime.timedelta(days=7)
+        stmt = select(LastValues.cg_id, LastValues.created_at).where(LastValues.created_at > seven_days_ago)
         result = await session.execute(stmt)
-        result = result.scalar_one_or_none()
+        result = result.mappings()
+        result = [schema.NewCoinResponse(
+            cg_id=res["cg_id"],
+            created_at=time.mktime(res["created_at"].timetuple())) for res in result]
         return result
 
 
@@ -103,6 +106,7 @@ async def main():
         crud = LastCRUD()
         # lost = await crud.get_lost_coins(session=session)
         # lost = await crud.get_ids_with_prices(session=session, limit=10000, offset=0)
+        # res = await crud.get_new_coins(session)
         res = await crud.get_last_with_symbols(session)
         print(res)
 

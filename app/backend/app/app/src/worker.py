@@ -33,7 +33,7 @@ def setup_periodic_tasks(sender, **kwargs):
     # Historical tasks
     sender.add_periodic_task(1200.0, top_historical_task.s(), name="Update top historical data from exchanges ohlcv")
     # sender.add_periodic_task(9000.0, all_historical_task.s(), name="Update all historical data from exchanges ohlcv")
-    sender.add_periodic_task(300.0, historical_last_task.s(), name="Update historical table from last values, delete old data")
+    sender.add_periodic_task(150.0, historical_last_task.s(), name="Update historical table from last values, delete old data")
     sender.add_periodic_task(300.0, exchange_volumes_task.s(), name="Update exchange chart tables, delete old data")
 
     # Coingecko tasks

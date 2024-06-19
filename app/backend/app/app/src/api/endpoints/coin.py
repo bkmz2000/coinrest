@@ -6,7 +6,7 @@ from src.db import connection
 from src.db.crud import get_fiat_currency_rate
 from src.db.cruds.crud_ticker import TickerCRUD
 from src.db.cruds.crud_last import LastCRUD
-from src.lib.schema import MarketResponse, CoinResponse
+from src.lib.schema import MarketResponse, CoinResponse, NewCoinResponse
 from loguru import logger as lg
 
 router = APIRouter()
@@ -78,3 +78,10 @@ async def lost_coins(hdr_id: str, session: AsyncSession = Depends(connection.get
     return await crud.get_coin_quotes(session=session, hdr_id=hdr_id)
 
 
+@router.get("/new", response_model=list[NewCoinResponse])
+async def get_new_tickers(session: AsyncSession = Depends(connection.get_db)):
+    """
+        Get new coins
+    """
+    last_crud = LastCRUD()
+    return await last_crud.get_new_coins(session=session)

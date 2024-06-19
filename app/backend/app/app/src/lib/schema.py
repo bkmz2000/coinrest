@@ -125,13 +125,8 @@ class HistoricalResponse(BaseModel):
 
 class NewCoinResponse(BaseModel):
     cg_id: str | None
-    base: str
-    quote: str
-    on_create_id: str
     created_at: int
-    exchange: str
-    new_for_market: bool
-    new_for_exchange: bool
+
 
 class Bid(BaseModel):
     price: float

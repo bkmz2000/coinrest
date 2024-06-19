@@ -128,16 +128,6 @@ class CreateExchange:
     cg_identifier: str
 
 
-class NewCoin(BaseModel):
-    cg_id: str | None
-    base: str
-    quote: str
-    price_usd: float
-    exchange: str
-    on_create_id: str
-    created_at: int
-
-
 class OrderBookCoin(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

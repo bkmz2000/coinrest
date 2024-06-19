@@ -188,7 +188,6 @@ class TickerCRUD:
         unix_stamp_now = int(time.time()) - 10800  # 3 hours
 
         as_date = datetime.datetime.utcfromtimestamp(unix_stamp_now)
-        new_coins_date = as_date - datetime.timedelta(days=7)
 
         base_cg_prices = (
             select(Ticker.base_cg.label("cg_id"), Ticker.price_usd.label("price_usd"), Ticker.volume_usd)
@@ -205,16 +204,8 @@ class TickerCRUD:
             .where(Ticker.volume_usd > 0)
             .where(Ticker.last_update > unix_stamp_now)
         )
-        new_coins_prices = (
-            select(Ticker.on_create_id.label("cg_id"), Ticker.price_usd.label("price_usd"),
-                   Ticker.volume_usd)
-            .where(Ticker.base_cg.is_(null()))
-            .where(Ticker.price_usd > 0)
-            .where(Ticker.volume_usd > 0)
-            .where(Ticker.created_at > new_coins_date)
-        )
-        # stmt = union_all(new_coins_prices).order_by(Ticker.volume_usd.desc())
-        stmt = union_all(base_cg_prices, quote_cg_prices, new_coins_prices).order_by(Ticker.volume_usd.desc())
+
+        stmt = union_all(base_cg_prices, quote_cg_prices).order_by(Ticker.volume_usd.desc())
 
         result = await session.execute(stmt)
         result = result.mappings()
@@ -230,26 +221,6 @@ class TickerCRUD:
                 )
         result = await session.execute(stmt)
         result = result.scalars().all()
-        return result
-
-    async def new(self, session: AsyncSession) -> list[utils.NewCoin]:
-        week = datetime.datetime.now() - datetime.timedelta(days=7)
-        stmt = (select(Ticker.base_cg.label("cg_id"),
-                       Exchange.ccxt_name.label("exchange"),
-                       Ticker.base,
-                       Ticker.quote,
-                       Ticker.price_usd,
-                       Ticker.on_create_id,
-                       Ticker.created_at)
-                .where(Ticker.on_create_id.is_not(null()))
-                .where(Ticker.created_at > week)
-                .where(Ticker.exchange_id == Exchange.id)
-                )
-
-        result = await session.execute(stmt)
-        result = result.mappings()
-        result = [utils.NewCoin.model_validate(res) for res in result]
-
         return result
 
     async def get_prices_by_symbol(self, session: AsyncSession, symbol: str):

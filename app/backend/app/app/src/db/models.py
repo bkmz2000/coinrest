@@ -113,6 +113,7 @@ class LastValues(Base):
     volume_usd: Mapped[float] = mapped_column(NUMERIC, nullable=True)
     volume_btc: Mapped[float] = mapped_column(NUMERIC, nullable=True)
     last_update: Mapped[datetime.datetime] = mapped_column(nullable=True, server_default=func.now())
+    created_at: Mapped[datetime.datetime] = mapped_column(nullable=True, server_default=func.now())
 
     __table_args__ = (UniqueConstraint("cg_id", name="cg_id_unique"),)
 

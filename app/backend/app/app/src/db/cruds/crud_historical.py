@@ -137,9 +137,9 @@ class HistoricalCRUD:
         await session.commit()
 
     async def delete_old_chart_data(self, session: AsyncSession):
-        day_ago = int(time.time()) - 3600 * 24
-        month_ago = int(time.time()) - 3600 * 24 * 31
-        year_ago = int(time.time()) - 3600 * 24 * 365
+        day_ago = int(time.time()) - 3600 * 25
+        month_ago = int(time.time()) - 3600 * 24 * 32
+        year_ago = int(time.time()) - 3600 * 24 * 366
         min_stmt = delete(FiveMinExchangeVolumeChart).where(FiveMinExchangeVolumeChart.timestamp < day_ago)
         month_stmt = delete(OneHourExchangeVolumeChart).where(OneHourExchangeVolumeChart.timestamp < month_ago)
         day_stmt = delete(OneDayExchangeVolumeChart).where(OneDayExchangeVolumeChart.timestamp < year_ago)

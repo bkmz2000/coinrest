@@ -91,7 +91,11 @@ class LastCRUD:
 
     async def get_new_coins(self, session: AsyncSession) -> list[schema.NewCoinResponse]:
         seven_days_ago = datetime.datetime.now() - datetime.timedelta(days=7)
-        stmt = select(LastValues.cg_id, LastValues.created_at).where(LastValues.created_at > seven_days_ago)
+        tree_hours_ago = datetime.datetime.now() - datetime.timedelta(hours=3)
+        stmt = (select(LastValues.cg_id, LastValues.created_at)
+                .where(LastValues.created_at > seven_days_ago)
+                .where(LastValues.last_update > tree_hours_ago)
+                )
         result = await session.execute(stmt)
         result = result.mappings()
         result = [schema.NewCoinResponse(
@@ -107,7 +111,7 @@ async def main():
         # lost = await crud.get_lost_coins(session=session)
         # lost = await crud.get_ids_with_prices(session=session, limit=10000, offset=0)
         # res = await crud.get_new_coins(session)
-        res = await crud.get_last_with_symbols(session)
+        res = await crud.get_new_coins(session)
         print(res)
 
 

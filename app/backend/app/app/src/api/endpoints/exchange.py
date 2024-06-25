@@ -27,9 +27,9 @@ async def get_top_exchanges(session: AsyncSession = Depends(connection.get_db), 
     return await ex.get_top_exchanges(session=session, limit=limit)
 
 @router.get("/pairs", response_model=PairsResponse)
-async def get_pairs(session: AsyncSession = Depends(connection.get_db), exchange_name: str = Query()):
+async def get_pairs(session: AsyncSession = Depends(connection.get_db), exchange_name: str = Query(), currency: str = Query()):
     ex = ExchangeCRUD()
-    return await ex.get_pairs(session, exchange_name)
+    return await ex.get_pairs(session, exchange_name, currency)
 
 @router.get("/top_pairs", response_model=TopPairsResponse)
 async def get_top_pairs(session: AsyncSession = Depends(connection.get_db), exchange_name: str = Query()):

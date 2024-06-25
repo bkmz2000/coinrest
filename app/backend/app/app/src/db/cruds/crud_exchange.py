@@ -9,6 +9,7 @@ from loguru import logger as lg
 from src.db.models import Exchange, ExchangeMapper, Ticker
 from src.lib.schema import ExchangeResponse, StrapiMarket, ExchangeNameResponse, TopExchangeResponse, PairsResponse, ExchangePair, TickerResponse, TickerInfo, TopPairsResponse, PercentagePair, TopCoinsResponse, CoinPercentage
 from src.lib import utils
+from src.db.crud import get_fiat_currency_rate
 
 
 class ExchangeCRUD:
@@ -95,13 +96,14 @@ class ExchangeCRUD:
         result = [TopExchangeResponse.model_validate(exchange) for exchange in result]
         return result
     
-    async def get_pairs(self, session: AsyncSession, exchange_name: str) -> PairsResponse:
+    async def get_pairs(self, session: AsyncSession, exchange_name: str, currency: str) -> PairsResponse:
         id_req = select(Exchange.id).where(Exchange.ccxt_name == exchange_name)
         exchange_id = (await session.execute(id_req)).scalar_one_or_none()
 
         pairs_req = select(Ticker).where(Ticker.exchange_id == exchange_id)
 
         result = await session.execute(pairs_req)
+        rate = await get_fiat_currency_rate(session, currency)
         lines = result.scalars().all()
 
         ex_pairs: list[ExchangePair] = []
@@ -109,7 +111,7 @@ class ExchangeCRUD:
         for line in lines:
             base = line.base
             quote = line.quote
-            price = line.price
+            price = line.price*rate
             volume_usd = line.volume_usd
             ex_pairs.append(ExchangePair(
                 base=base,

@@ -2,7 +2,6 @@ import asyncio
 import time
 import datetime
 
-import sqlalchemy
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
@@ -81,12 +80,12 @@ class LastCRUD:
         result = [utils.CoinWithPrice.model_validate(res) for res in result]
         return result
 
-    async def get_last_with_symbols(self, session: AsyncSession):
+    async def get_last_with_symbols(self, session: AsyncSession) -> dict[str, float]:
         stmt = (select(LastValues.cg_id, Ticker.base, LastValues.price_usd)
                 .where(LastValues.cg_id == Ticker.base_cg))
         result = await session.execute(stmt)
         result = result.mappings()
-        result = [utils.LastCoinWithSymbol.model_validate(res) for res in result]
+        result = {res["base"]: float(res["price_usd"]) for res in result}
         return result
 
     async def get_new_coins(self, session: AsyncSession) -> list[schema.NewCoinResponse]:

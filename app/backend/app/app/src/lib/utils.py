@@ -97,14 +97,8 @@ class CoinWithPrice(BaseModel):
 class CoinWithPriceAndDate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    cg_id: str | None
     price_usd: float
     created_at: int | None
-
-class LastCoinWithSymbol(BaseModel):
-    cg_id: str
-    base: str
-    price_usd: float
 
 @dataclass
 class ActualCoinIn:
@@ -162,6 +156,15 @@ class FiatRate(BaseModel):
     currency: str
     rate: float
     updated_at: datetime.datetime
+
+
+class NewCoin(BaseModel):
+    base: str
+    quote: str
+    price_usd: float
+    exchange: str
+    on_create_id: str
+    created_at: int
 
 
 def repeat_with_timeout(timeout: int):

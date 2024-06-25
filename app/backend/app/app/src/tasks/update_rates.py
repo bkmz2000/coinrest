@@ -1,5 +1,7 @@
 import asyncio
 import os
+import sys
+import traceback
 from datetime import datetime
 from loguru import logger as lg
 
@@ -29,6 +31,7 @@ async def get_rates_from_fmg() -> list[utils.QuoteRate]:
         url = f"https://financialmodelingprep.com/api/v4/crypto/last/{quote}USD"
         data = await _get_data(url)
         if not data:
+            lg.error(f"Unable to fetch {quote}")
             continue
         currency = data.get("symbol")[:-3]
         rate = data.get("price")
@@ -83,14 +86,17 @@ async def get_currency_rates() -> list[utils.FiatRate]:
     return rates
 
 async def main() -> None:
-    fiat_rates = await get_currency_rates()
-    quote_rates = await get_rates_from_fmg()
-    vnst_rate = await get_rates_for_VNST()
-    quote_rates.append(vnst_rate)
-    async with AsyncSessionFactory() as session:
-        await update_quote_mapper(session=session, rates=quote_rates)
-        await update_fiat_currency_rates(session=session, rates=fiat_rates)
-    lg.info("Currency rates updated")
+    try:
+        fiat_rates = await get_currency_rates()
+        quote_rates = await get_rates_from_fmg()
+        vnst_rate = await get_rates_for_VNST()
+        quote_rates.append(vnst_rate)
+        async with AsyncSessionFactory() as session:
+            await update_quote_mapper(session=session, rates=quote_rates)
+            await update_fiat_currency_rates(session=session, rates=fiat_rates)
+        lg.info("Currency rates updated")
+    except Exception as e:
+        lg.error(e.with_traceback(traceback.print_exc(100, sys.stdout)))
 
 if __name__ == "__main__":
     asyncio.run(main())

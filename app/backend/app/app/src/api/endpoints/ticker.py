@@ -2,10 +2,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends
 from starlette import status
 from src.db import connection
-from src.db.cruds.crud_last import LastCRUD
 from src.db.cruds.crud_ticker import TickerCRUD
 from src.lib import schema
-from src.api.rest import last_prices
+from src.api.rest import new_tickers
 
 router = APIRouter()
 
@@ -43,3 +42,11 @@ async def get_ticker_mapper(exchange_ids: str, session: AsyncSession = Depends(c
     exs = exchange_ids.split(",")
     ticker = TickerCRUD()
     return await ticker.get_mapper(exchange_ids=exs, session=session)
+
+
+@router.get("/new", response_model=list[schema.NewTickerResponse])
+async def get_new_tickers(session: AsyncSession = Depends(connection.get_db)):
+    """
+        Get new tickers from exchanges
+    """
+    return await new_tickers.get_new_tickers(session=session)

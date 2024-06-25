@@ -112,16 +112,7 @@ active_ccxt_exchanges = [
     'zonda',
 ]
 
-quotes = ['CRO', 'LA', 'TRX', 'HIT', 'TESTUSDT', 'EUTF0', 'BVND', 'USDCBSC', 'BIDR', 'PZM', 'USDT', 'DGLD', 'TWD',
-          'PLN', 'UST', 'USDTBSC', 'BGN', 'CAD', 'ZAR', 'UAHG', 'ETH', 'USDCAVALANCHE', 'BYN', 'CNHT', 'BRL', 'GEL',
-          'BTC-WXG', 'USDC-BEP20', 'BTC', 'WRX', 'VET', 'EOSDT', 'USDT-BEP20', 'SBTC', 'WAVES', 'KRW', 'PYUSD',
-          'USDCTRON', 'EOS', 'EURS', 'KZT', 'USDCPOLYGONNATIVE', 'USDTTRON', 'VAI', 'BUSD', 'BCH', 'USDC-WXG', 'KCS',
-          'RON', 'UAH', 'MXNT', 'XTN', 'INR', 'MIM', 'SOL', 'TUSD', 'XRP', 'BRL20', 'NOK', 'BRZ', 'HKD', 'TESTUSDTF0',
-          'CHF', 'PAX', 'USTF0', 'USDT-WXG', 'BNB', 'EAST', 'NGN', 'BFIC', 'AED', 'MXN', 'WBTC', 'USD', 'HUF', 'ARS',
-          'CNH', 'OCE', 'SNET', 'USDD', 'DOT', 'USDCPOLYGONBRIDGED', 'XDC', 'AEUR', 'SGD', 'USDC-ERC20', 'BTCF0',
-          'DOGE', 'JPY', 'AUDT', 'CZK', 'CNYX', 'GBP', 'USDP', 'VUSD', 'EURT', 'DKK', 'EURST', 'USDTAVALANCHE', 'AUD',
-          'TESTUSD', 'TRY', 'DEL', 'USDTPOLYGON', 'USDC', 'ADA', 'BTCB', 'EUR', 'RUB', 'FDUSD', 'SATS', 'BTR', 'NZD',
-          'XAUT', 'USDT-ERC20', 'GRB', 'SEK', 'BKRW', 'TRY20', 'DAI', 'USDS', 'IDRT', 'LTC']
+quotes = ['CRO', 'LA', 'TRX', 'HIT', 'PZM', 'USDT', 'TWD', 'PLN', 'UST', 'BGN', 'CAD', 'ZAR', 'ETH', 'BRL', 'GEL', 'BTC', 'WRX', 'VET', 'EOSDT', 'SBTC', 'WAVES', 'KRW', 'PYUSD', 'EOS', 'EURS', 'KZT', 'VAI', 'BUSD', 'BCH', 'KCS', 'RON', 'UAH', 'XTN', 'INR', 'MIM', 'SOL', 'TUSD', 'XRP', 'NOK', 'HKD', 'CHF', 'PAX', 'BNB', 'NGN', 'BFIC', 'AED', 'MXN', 'WBTC', 'HUF', 'ARS', 'CNH', 'OCE', 'SNET', 'USDD', 'DOT', 'XDC', 'SGD', 'DOGE', 'JPY', 'AUDT', 'CZK', 'GBP', 'EURT', 'DKK', 'AUD', 'TRY', 'DEL', 'USDC', 'ADA', 'BTCB', 'EUR', 'RUB', 'BTR', 'NZD', 'XAUT', 'GRB', 'SEK', 'DAI', 'USDS', 'IDRT', 'LTC']
 
 counters = {'USDT': 18860, # +
             'BTC': 3216, # +
@@ -175,8 +166,3 @@ counters = {'USDT': 18860, # +
             'USDCPOLYGONBRIDGED': 1, 'USDCPOLYGONNATIVE': 1, 'USDCTRON': 1, 'USDTAVALANCHE': 1, 'USDTBSC': 1,
             'USDTPOLYGON': 1, 'USDTTRON': 1, 'WBTC': 1, 'USDT-BEP20': 1, 'USDC-ERC20': 1, 'BTCB': 1, 'USDC-BEP20': 1,
             'EAST': 1, 'OCE': 1, 'SNET': 1, 'CNYX': 1, 'MIM': 1}
-
-errors = ['USD', 'USTF0', 'BIDR', 'TESTUSD', 'TESTUSDTF0', 'BKRW', 'USDT-WXG', 'USDC-WXG', 'USDT-ERC20', 'BTCF0',
-          'BTC-WXG', 'MXNT', 'TRY20', 'BRL20', 'VUSD', 'CNHT', 'BVND', 'TESTUSDT', 'EUTF0', 'DGLD', 'BRZ', 'UAHG',
-          'USDCAVALANCHE', 'USDCBSC', 'USDCPOLYGONBRIDGED', 'USDCPOLYGONNATIVE', 'USDCTRON', 'USDTAVALANCHE', 'USDTBSC',
-          'USDTPOLYGON', 'USDTTRON', 'USDT-BEP20', 'USDC-ERC20', 'USDC-BEP20', 'EAST', 'CNYX']

@@ -79,7 +79,7 @@ async def lost_coins(hdr_id: str, session: AsyncSession = Depends(connection.get
 
 
 @router.get("/new", response_model=list[NewCoinResponse])
-async def get_new_tickers(session: AsyncSession = Depends(connection.get_db)):
+async def get_new_coins(session: AsyncSession = Depends(connection.get_db)):
     """
         Get new coins
     """

@@ -128,6 +128,16 @@ class NewCoinResponse(BaseModel):
     created_at: int
 
 
+class NewTickerResponse(BaseModel):
+    base: str
+    quote: str
+    price_usd: float
+    on_create_id: str
+    created_at: int
+    exchange: str
+    new_for_market: bool
+    new_for_exchange: bool
+
 class Bid(BaseModel):
     price: float
     qty: float
@@ -207,22 +217,3 @@ class ExchangeChartResponse(BaseModel):
     period: Literal['24h', '7d', '14d', '1M', '3M', '1Y']
     currency: str
     data: list[ChartEntry]
-
-
-# {
-#   "event": "entry.update",
-#   "createdAt": "2020-01-10T08:58:26.563Z",
-#   "model": "address",
-#   "entry": {
-#     "id": 1,
-#     "geolocation": {},
-#     "city": "Paris",
-#     "postal_code": null,
-#     "category": null,
-#     "full_name": "Paris",
-#     "createdAt": "2020-01-10T08:47:36.264Z",
-#     "updatedAt": "2020-01-10T08:58:26.210Z",
-#     "cover": null,
-#     "images": []
-#   }
-# }

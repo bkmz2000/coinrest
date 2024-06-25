@@ -185,27 +185,37 @@ class TickerCRUD:
         """
         Get all base ticker with their prices and volumes. And get all quote tickers with their volumes only
         """
-        unix_stamp_now = int(time.time()) - 10800  # 3 hours
-
-        as_date = datetime.datetime.utcfromtimestamp(unix_stamp_now)
+        three_hours_ago = int(time.time()) - 10800  # 3 hours
+        twelve_hours_ago_date = datetime.datetime.now() - datetime.timedelta(hours=12)
+        seven_days_ago_date = datetime.datetime.now() - datetime.timedelta(days=7)
 
         base_cg_prices = (
             select(Ticker.base_cg.label("cg_id"), Ticker.price_usd.label("price_usd"), Ticker.volume_usd)
             .where(Ticker.base_cg.is_not(null()))
             .where(Ticker.price_usd > 0)
             .where(Ticker.volume_usd > 0)
-            .where(Ticker.last_update > unix_stamp_now)
+            .where(Ticker.last_update > three_hours_ago)
         )
         quote_cg_prices = (
             select(Ticker.quote_cg.label("cg_id"), QuoteMapper.rate.label("price_usd"), Ticker.volume_usd)
             .where(Ticker.quote == QuoteMapper.currency)
-            .where(QuoteMapper.update_at > as_date)
+            .where(QuoteMapper.update_at > twelve_hours_ago_date)
             .where(Ticker.quote_cg.is_not(null()))
             .where(Ticker.volume_usd > 0)
-            .where(Ticker.last_update > unix_stamp_now)
+            .where(Ticker.last_update > three_hours_ago)
         )
-
-        stmt = union_all(base_cg_prices, quote_cg_prices).order_by(Ticker.volume_usd.desc())
+        matched_tickers_subq = select(Ticker.base).where(Ticker.base_cg.is_not(null())).distinct().select_from(Ticker).scalar_subquery()
+        new_coins_prices = (
+            select(Ticker.on_create_id.label("cg_id"), Ticker.price_usd.label("price_usd"),
+                   Ticker.volume_usd)
+            .where(Ticker.base.notin_(matched_tickers_subq))
+            .where(Ticker.price_usd > 0)
+            .where(Ticker.volume_usd > 0)
+            .where(Ticker.last_update > three_hours_ago)
+            .where(Ticker.created_at > seven_days_ago_date)
+        )
+        stmt = union_all(base_cg_prices, quote_cg_prices, new_coins_prices).order_by(Ticker.volume_usd.desc())
+        # stmt = union_all(base_cg_prices, quote_cg_prices).order_by(Ticker.volume_usd.desc())
 
         result = await session.execute(stmt)
         result = result.mappings()
@@ -226,7 +236,7 @@ class TickerCRUD:
     async def get_prices_by_symbol(self, session: AsyncSession, symbol: str):
         unix_stamp_now = int(time.time()) - 10800  # 3 hours
 
-        stmt = ((select(Ticker.base_cg.label("cg_id"), Ticker.price_usd, Ticker.created_at)
+        stmt = ((select(Ticker.price_usd, Ticker.created_at)
                  .where(Ticker.base == symbol)
                  .where(Ticker.last_update > unix_stamp_now)))
         result = await session.execute(stmt)
@@ -340,12 +350,32 @@ class TickerCRUD:
         result = result.scalars().all()
         return result
 
+    async def new(self, session: AsyncSession) -> list[utils.NewCoin]:
+        # week = datetime.datetime.now() - datetime.timedelta(days=7)
+        week = datetime.datetime.now() - datetime.timedelta(days=1)
+        stmt = (select(Exchange.ccxt_name.label("exchange"),
+                       Ticker.base,
+                       Ticker.quote,
+                       Ticker.price_usd,
+                       Ticker.on_create_id,
+                       Ticker.created_at)
+                .where(Ticker.base_cg.is_(null()))
+                .where(Ticker.on_create_id.is_not(null()))
+                .where(Ticker.created_at > week)
+                .where(Ticker.exchange_id == Exchange.id)
+                )
+
+        result = await session.execute(stmt)
+        result = result.mappings()
+        result = [utils.NewCoin.model_validate(res) for res in result]
+
+        return result
+
 
 async def main():
     async with AsyncSessionFactory() as session:
         cr = TickerCRUD()
-        await cr.get_depth_exchanges(session)
-        # await cr.save_max_volume_tickers(session)
+        res = await cr.get_all_tickers(session)
 
 
 if __name__ == "__main__":

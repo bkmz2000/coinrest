@@ -66,8 +66,7 @@ async def get_charts(exchange_name: str,
         currency_rate = await get_fiat_currency_rate(session=session, currency=currency)
     else:
         currency_rate = 1
-    print(charts)
-    print(right, left)
+
     if not charts:
         return schema.ExchangeChartResponse(
             exchange_id=exchange_name,

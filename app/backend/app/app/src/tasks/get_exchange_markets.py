@@ -33,6 +33,9 @@ async def get_price_and_volume(ex: str):
             for symbol, prop in tickers.items():
                 ticker = market.converter.get_normalized_ticker(symbol, prop)
                 if ticker:
+                    validated = market.ticker_validator.validate_ticker(ticker)
+                    if not validated:
+                        continue
                     normalized_tickers.append(ticker)
             lg.info(f"{market.exchange_name} normalize {len(normalized_tickers)} tickers")
             await market.save_tickers(normalized_tickers)

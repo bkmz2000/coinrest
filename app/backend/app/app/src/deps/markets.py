@@ -10,6 +10,7 @@ from loguru import logger as lg
 from src.db.connection import AsyncSessionFactory
 from src.db.cruds.crud_exchange import ExchangeCRUD
 from src.deps.converter import Converter
+from src.deps.ticker_validator import ticker_validators
 from src.lib.utils import UpdateEventTo, NotActiveExchange
 from src.lib.schema import TickerInfo
 from src.strapi_sync.strapi import update_strapi_state
@@ -30,6 +31,7 @@ class Market:
         self.exchange = None
         self.converter: Converter = None
         self.fetch_timeout = None
+        self.ticker_validator = ticker_validators(self.exchange_name)
 
     async def __aenter__(self):
         # Load exchange class

@@ -103,7 +103,11 @@ class ExchangeCRUD:
         pairs_req = select(Ticker).where(Ticker.exchange_id == exchange_id)
 
         result = await session.execute(pairs_req)
-        rate = await get_fiat_currency_rate(session, currency)
+        rate = 1
+        
+        if currency != 'USD':
+            rate = await get_fiat_currency_rate(session, currency)
+            
         lines = result.scalars().all()
 
         ex_pairs: list[ExchangePair] = []

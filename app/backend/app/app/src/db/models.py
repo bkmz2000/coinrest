@@ -44,6 +44,9 @@ class Exchange(Base):
     centralized: Mapped[bool] = mapped_column(nullable=True)
     logo: Mapped[str] = mapped_column(TEXT, nullable=True)
     is_active: Mapped[bool] = mapped_column(nullable=True, default=True)
+    
+    auto_description: Mapped[str] = mapped_column(TEXT, nullable=True)
+    description: Mapped[str] = mapped_column(TEXT, nullable=True)
 
     ticker: Mapped[List["Ticker"]] = relationship(back_populates="exchange", cascade="all, delete",
                                                   passive_deletes=True)
